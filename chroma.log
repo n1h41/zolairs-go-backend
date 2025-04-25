@@ -1,0 +1,107 @@
+INFO:     [19-04-2025 01:16:48] Set chroma_server_nofile to 65535
+DEBUG:    [19-04-2025 01:16:49] Starting component System
+DEBUG:    [19-04-2025 01:16:49] Starting component OpenTelemetryClient
+DEBUG:    [19-04-2025 01:16:49] Starting component SqliteDB
+DEBUG:    [19-04-2025 01:16:49] Starting component SimpleQuotaEnforcer
+DEBUG:    [19-04-2025 01:16:49] Starting component Posthog
+DEBUG:    [19-04-2025 01:16:49] Starting component SimpleRateLimitEnforcer
+DEBUG:    [19-04-2025 01:16:49] Starting component LocalSegmentManager
+DEBUG:    [19-04-2025 01:16:49] Starting component LocalExecutor
+DEBUG:    [19-04-2025 01:16:49] Starting component SegmentAPI
+DEBUG:    [19-04-2025 01:16:49] Starting component SimpleAsyncRateLimitEnforcer
+INFO:     [19-04-2025 01:16:49] Started server process [135030]
+INFO:     [19-04-2025 01:16:49] Waiting for application startup.
+INFO:     [19-04-2025 01:16:49] Application startup complete.
+INFO:     [19-04-2025 01:16:49] Uvicorn running on http://localhost:42711 (Press CTRL+C to quit)
+INFO:     [19-04-2025 01:16:49] 127.0.0.1:55234 - "GET /api/v1/heartbeat HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:49] 127.0.0.1:55238 - "GET /api/v2/auth/identity HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:49] 127.0.0.1:55238 - "GET /api/v2/tenants/default_tenant HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:49] 127.0.0.1:55238 - "GET /api/v2/tenants/default_tenant/databases/default_database?tenant=default_tenant HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "GET /api/v2/pre-flight-checks HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+DEBUG:    [19-04-2025 01:16:56] Starting component PersistentLocalHnswSegment
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:56] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:57] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:57] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:57] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:57] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:57] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [19-04-2025 01:16:57] 127.0.0.1:46960 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [19-04-2025 01:16:57] Shutting down
+INFO:     [19-04-2025 01:16:57] Waiting for application shutdown.
+DEBUG:    [19-04-2025 01:16:57] Stopping component System
+DEBUG:    [19-04-2025 01:16:57] Stopping component SegmentAPI
+DEBUG:    [19-04-2025 01:16:57] Stopping component LocalExecutor
+DEBUG:    [19-04-2025 01:16:57] Stopping component PersistentLocalHnswSegment
+DEBUG:    [19-04-2025 01:16:57] Stopping component LocalSegmentManager
+DEBUG:    [19-04-2025 01:16:57] Stopping component SimpleAsyncRateLimitEnforcer
+DEBUG:    [19-04-2025 01:16:57] Stopping component SimpleRateLimitEnforcer
+DEBUG:    [19-04-2025 01:16:57] Stopping component Posthog
+DEBUG:    [19-04-2025 01:16:57] Stopping component SimpleQuotaEnforcer
+DEBUG:    [19-04-2025 01:16:57] Stopping component SqliteDB
+DEBUG:    [19-04-2025 01:16:57] Stopping component OpenTelemetryClient
+INFO:     [19-04-2025 01:16:57] Application shutdown complete.
+INFO:     [19-04-2025 01:16:57] Finished server process [135030]
+INFO:     [20-04-2025 16:11:41] Set chroma_server_nofile to 65535
+DEBUG:    [20-04-2025 16:11:41] Starting component System
+DEBUG:    [20-04-2025 16:11:41] Starting component OpenTelemetryClient
+DEBUG:    [20-04-2025 16:11:41] Starting component SqliteDB
+DEBUG:    [20-04-2025 16:11:41] Starting component SimpleQuotaEnforcer
+DEBUG:    [20-04-2025 16:11:41] Starting component Posthog
+DEBUG:    [20-04-2025 16:11:41] Starting component SimpleRateLimitEnforcer
+DEBUG:    [20-04-2025 16:11:41] Starting component LocalSegmentManager
+DEBUG:    [20-04-2025 16:11:41] Starting component LocalExecutor
+DEBUG:    [20-04-2025 16:11:41] Starting component SegmentAPI
+DEBUG:    [20-04-2025 16:11:41] Starting component SimpleAsyncRateLimitEnforcer
+INFO:     [20-04-2025 16:11:41] Started server process [26394]
+INFO:     [20-04-2025 16:11:41] Waiting for application startup.
+INFO:     [20-04-2025 16:11:41] Application startup complete.
+INFO:     [20-04-2025 16:11:41] Uvicorn running on http://localhost:42703 (Press CTRL+C to quit)
+INFO:     [20-04-2025 16:11:41] 127.0.0.1:42722 - "GET /api/v1/heartbeat HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:41] 127.0.0.1:42738 - "GET /api/v2/auth/identity HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:41] 127.0.0.1:42738 - "GET /api/v2/tenants/default_tenant HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:41] 127.0.0.1:42738 - "GET /api/v2/tenants/default_tenant/databases/default_database?tenant=default_tenant HTTP/1.1" 200
+DEBUG:    [20-04-2025 16:11:50] Collection 0a3e7d420697e3d3b3787958318e1d1b13107a6fc7a434f6db105e0903a184f already exists, returning existing collection.
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "GET /api/v2/pre-flight-checks HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+DEBUG:    [20-04-2025 16:11:50] Starting component PersistentLocalHnswSegment
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/delete HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/delete HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/add HTTP/1.1" 201
+INFO:     [20-04-2025 16:11:50] 127.0.0.1:35680 - "POST /api/v2/tenants/default_tenant/databases/default_database/collections/eb6eda33-1735-4266-898f-b82cc356119a/get HTTP/1.1" 200
+INFO:     [20-04-2025 16:11:50] Shutting down
+INFO:     [20-04-2025 16:11:50] Waiting for application shutdown.
+DEBUG:    [20-04-2025 16:11:50] Stopping component System
+DEBUG:    [20-04-2025 16:11:50] Stopping component SegmentAPI
+DEBUG:    [20-04-2025 16:11:50] Stopping component LocalExecutor
+DEBUG:    [20-04-2025 16:11:50] Stopping component PersistentLocalHnswSegment
+DEBUG:    [20-04-2025 16:11:50] Stopping component LocalSegmentManager
+DEBUG:    [20-04-2025 16:11:50] Stopping component SimpleAsyncRateLimitEnforcer
+DEBUG:    [20-04-2025 16:11:50] Stopping component SimpleRateLimitEnforcer
+DEBUG:    [20-04-2025 16:11:50] Stopping component Posthog
+DEBUG:    [20-04-2025 16:11:50] Stopping component SimpleQuotaEnforcer
+DEBUG:    [20-04-2025 16:11:50] Stopping component SqliteDB
+DEBUG:    [20-04-2025 16:11:50] Stopping component OpenTelemetryClient
+INFO:     [20-04-2025 16:11:50] Application shutdown complete.
+INFO:     [20-04-2025 16:11:50] Finished server process [26394]

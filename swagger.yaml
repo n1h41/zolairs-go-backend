@@ -1,0 +1,100 @@
+openapi: 3.0.0
+info:
+  title: Zolaris Backend API
+  description: API for Zolaris backend application
+  version: 1.0.0
+servers:
+  - url: https://{serverlessRestApi}.execute-api.{region}.amazonaws.com/Prod
+    variables:
+      serverlessRestApi:
+        default: yourApiId
+        description: API Gateway ID
+      region:
+        default: us-east-1
+        description: AWS Region
+paths:
+  /attach-iot-policy:
+    post:
+      summary: Attach IoT Policy to a device
+      description: Attaches an IoT policy to a specified device
+      operationId: attachIotPolicy
+      tags:
+        - IoT Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - policyName
+                - certificateArn
+              properties:
+                policyName:
+                  type: string
+                  description: The name of the policy to attach
+                certificateArn:
+                  type: string
+                  description: The ARN of the certificate to attach the policy to
+      responses:
+        "200":
+          description: Policy successfully attached
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
+  /user/{userId}/device:
+    post:
+      summary: Add a new device for a user
+      description: Registers a new IoT device for the specified user
+      operationId: addDevice
+      tags:
+        - Device Management
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of the user
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deviceId
+              properties:
+                deviceId:
+                  type: string
+                  description: Unique identifier for the device
+                deviceName:
+                  type: string
+                  description: Name of the device
+                deviceType:
+                  type: string
+                  description: Type of the device
+      responses:
+        "201":
+          description: Device successfully added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deviceId:
+                    type: string
+                  message:
+                    type: string
+        "400":
+          description: Bad request
+        "500":
+          description: Internal server error
