@@ -2,11 +2,11 @@ FROM golang:1.24-alpine
 
 WORKDIR /app
 
-RUN go install github.com/air-verse/air@latest
+# Install Air with a specific version for better reproducibility
+RUN go install github.com/air-verse/air@v1.49.0
 
-#Install build essentials
-# RUN apk add --no-cache gcc musl-dev
-RUN apk --no-cache add ca-certificates tzdata
+# Install development tools and essential packages
+RUN apk --no-cache add ca-certificates tzdata curl jq
 
 # Copy go.mod and go.sum files
 COPY go.mod go.sum ./
@@ -14,8 +14,12 @@ COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
 
-# Copy the rest of the application
+# Copy the rest of the application (consider using .dockerignore)
 COPY . .
 
+# Set development environment variables
+ENV GO_ENV=development
+ENV GOTRACEBACK=all
+
 # Use air for live reloading in development
-# CMD [ "air", "-c", ".air.toml" ]
+CMD [ "air", "-c", ".air.toml" ]

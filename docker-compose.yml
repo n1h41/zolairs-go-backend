@@ -1,6 +1,13 @@
+version: '3.8'
+
 services:
   app-prod:
-    build: .
+    container_name: zolaris-backend-prod
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: 1
     ports:
       - "8080:8080"
     environment:
@@ -10,10 +17,11 @@ services:
       - DATA_TABLE_NAME=machine_data_table
       - USER_TABLE_NAME=users
       - IOT_POLICY_NAME=iot_p
+      # Using secrets would be better for credentials in production
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     volumes:
-      - ./:/app
+      - ./:/app:ro  # Read-only for production
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
@@ -21,4 +29,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+      start_interval: 5s
+    networks:
+      - zolaris-network
 
+networks:
+  zolaris-network:
+    driver: bridge
