@@ -14,17 +14,17 @@ import (
 
 // DeviceRepository handles all device-related database operations
 type DeviceRepository struct {
-	db            *dynamodb.Client
-	deviceTable   string
-	machineTable  string
+	db           *dynamodb.Client
+	deviceTable  string
+	machineTable string
 }
 
 // NewDeviceRepository creates a new device repository instance
 func NewDeviceRepository(dbClient *dynamodb.Client) *DeviceRepository {
 	return &DeviceRepository{
 		db:           dbClient,
-		deviceTable:  "devices",
-		machineTable: "machine_data",
+		deviceTable:  "machine_table",
+		machineTable: "machine_data_table",
 	}
 }
 
@@ -41,9 +41,9 @@ func (r *DeviceRepository) AddDevice(ctx context.Context, deviceID, deviceName, 
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String(r.deviceTable),
 		Item: map[string]types.AttributeValue{
-			"deviceId":   &types.AttributeValueMemberS{Value: deviceID},
-			"userId":     &types.AttributeValueMemberS{Value: userID},
-			"deviceName": &types.AttributeValueMemberS{Value: deviceName},
+			"mac_address": &types.AttributeValueMemberS{Value: deviceID},
+			"user_id":     &types.AttributeValueMemberS{Value: userID},
+			"device_name": &types.AttributeValueMemberS{Value: deviceName},
 		},
 	}
 
@@ -54,19 +54,17 @@ func (r *DeviceRepository) AddDevice(ctx context.Context, deviceID, deviceName, 
 
 // GetDevicesByUserID retrieves all devices for a specific user
 func (r *DeviceRepository) GetDevicesByUserID(ctx context.Context, userID string) ([]models.DeviceResponse, error) {
-	// Create query statement
-	statement := fmt.Sprintf(`SELECT * FROM "%s" WHERE "userId" = ?`, r.deviceTable)
-
-	// Execute the PartiQL query with parameters
-	input := &dynamodb.ExecuteStatementInput{
-		Statement: aws.String(statement),
-		Parameters: []types.AttributeValue{
-			&types.AttributeValueMemberS{Value: userID},
+	input := &dynamodb.QueryInput{
+		TableName:              aws.String(r.deviceTable),
+		IndexName:              aws.String("user_id-index"),
+		KeyConditionExpression: aws.String("user_id = :userId"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":userId": &types.AttributeValueMemberS{Value: userID},
 		},
 	}
 
 	// Execute the query
-	result, err := r.db.ExecuteStatement(ctx, input)
+	result, err := r.db.Query(ctx, input)
 	if err != nil {
 		return nil, err
 	}
@@ -109,4 +107,3 @@ func (r *DeviceRepository) GetSensorData(ctx context.Context, macID string, star
 
 	return sensorData, nil
 }
-
