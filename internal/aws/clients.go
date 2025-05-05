@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"n1h41/zolaris-backend-app/internal/config"
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -16,19 +15,10 @@ type Clients struct {
 	Iot      *iot.Client
 }
 
-func InitAWSClients(ctx context.Context, cfg *config.Config) (*Clients, error) {
-	log.Printf("Initializing AWS clients with region: %s", cfg.AWS.Region)
+func InitAWSClients(ctx context.Context) (*Clients, error) {
+	log.Printf("Initializing AWS clients")
 
-	opts := []func(*awsconfig.LoadOptions) error{}
-	if cfg.AWS.Region != "" {
-		opts = append(opts, awsconfig.WithRegion(cfg.AWS.Region))
-	}
-
-	if cfg.AWS.Profile != "" {
-		opts = append(opts, awsconfig.WithSharedConfigProfile(cfg.AWS.Profile))
-	}
-
-	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, opts...)
+	awsCfg, err := awsconfig.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}

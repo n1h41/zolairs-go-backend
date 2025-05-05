@@ -1,5 +1,6 @@
 services:
   app-dev:
+    # env_file: ./.env.development
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -8,13 +9,13 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
-      - AWS_REGION=${AWS_REGION}
-      - DEVICE_TABLE_NAME=machine_table
-      - DATA_TABLE_NAME=machine_data_table
-      - USER_TABLE_NAME=users
-      - IOT_POLICY_NAME=iot_p
+      - DEVICE_TABLE_NAME=${DEVICE_TABLE_NAME}
+      - DATA_TABLE_NAME=${DATA_TABLE_NAME}
+      - USER_TABLE_NAME=${USER_TABLE_NAME}
+      - IOT_POLICY_NAME=${IOT_POLICY_NAME}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
     volumes:
       - ./:/app
     restart: unless-stopped

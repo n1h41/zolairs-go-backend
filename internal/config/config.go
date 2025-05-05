@@ -32,7 +32,6 @@ type DatabaseConfig struct {
 type AWSConfig struct {
 	Region    string
 	IoTPolicy string
-	Profile   string
 }
 
 // LoadEnv loads environment variables from .env files
@@ -70,14 +69,13 @@ func LoadConfig() (*Config, error) {
 	config.Server.Environment = getEnv("ENVIRONMENT", "development")
 
 	// Database config
-	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "machine_table")
-	config.Database.DataTableName = getEnv("DATA_TABLE_NAME", "machine_data_table")
-	config.Database.UserTableName = getEnv("USER_TABLE_NAME", "user_table")
+	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "DEVICE_TABLE_NAME")
+	config.Database.DataTableName = getEnv("DATA_TABLE_NAME", "DATA_TABLE_NAME")
+	config.Database.UserTableName = getEnv("USER_TABLE_NAME", "USER_TABLE_NAME")
 
 	// AWS config
 	config.AWS.Region = getEnv("AWS_REGION", "us-east-1")
-	config.AWS.IoTPolicy = getEnv("IOT_POLICY_NAME", "iot_p")
-	config.AWS.Profile = getEnv("AWS_PROFILE", "default")
+	config.AWS.IoTPolicy = getEnv("IOT_POLICY_NAME", "IOT_POLICY_NAME")
 
 	return config, nil
 }

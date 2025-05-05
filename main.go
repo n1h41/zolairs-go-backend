@@ -35,7 +35,7 @@ func main() {
 
 	// Initialize AWS clients
 	log.Println("Initializing AWS clients...")
-	awsClients, err := aws.InitAWSClients(context.Background(), cfg)
+	awsClients, err := aws.InitAWSClients(context.Background())
 	if err != nil {
 		log.Fatalf("Failed to initialize AWS clients: %v", err)
 	}
