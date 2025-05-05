@@ -3,12 +3,15 @@ package handlers
 import (
 	"encoding/json"
 	"log"
-	"n1h41/zolaris-backend-app/internal/models"
-	"n1h41/zolaris-backend-app/internal/services"
-	transport "n1h41/zolaris-backend-app/internal/transport/http"
-	"n1h41/zolaris-backend-app/internal/utils"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"n1h41/zolaris-backend-app/internal/models"
+	"n1h41/zolaris-backend-app/internal/services"
+	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
+	transport_http "n1h41/zolaris-backend-app/internal/transport/http"
+	"n1h41/zolaris-backend-app/internal/utils"
 )
 
 // GetDeviceSensorDataHandler handles requests to get sensor data for a device
@@ -21,11 +24,11 @@ func NewGetDeviceSensorDataHandler(deviceService *services.DeviceService) *GetDe
 	return &GetDeviceSensorDataHandler{deviceService: deviceService}
 }
 
-// ServeHTTP implements http.Handler interface
+// ServeHTTP implements http.Handler interface (for backward compatibility)
 func (h *GetDeviceSensorDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
-		transport.SendError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		transport_http.SendError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -33,7 +36,7 @@ func (h *GetDeviceSensorDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	var request models.GetDeviceSensorDataRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		log.Printf("Error decoding request: %v", err)
-		transport.SendBadRequestError(w, "Invalid request format")
+		transport_http.SendBadRequestError(w, "Invalid request format")
 		return
 	}
 
@@ -41,7 +44,7 @@ func (h *GetDeviceSensorDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	validationErrs := utils.Validate(request)
 	if validationErrs != nil {
 		log.Printf("Validation errors: %s", utils.ValidationErrorsToString(validationErrs))
-		transport.SendBadRequestError(w, utils.CreateValidationError(validationErrs))
+		transport_http.SendBadRequestError(w, utils.CreateValidationError(validationErrs))
 		return
 	}
 
@@ -49,7 +52,7 @@ func (h *GetDeviceSensorDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	baseTimestamp, err := strconv.ParseInt(request.Timestamp, 10, 64)
 	if err != nil {
 		log.Printf("Error parsing timestamp: %v", err)
-		transport.SendBadRequestError(w, "Invalid timestamp format")
+		transport_http.SendBadRequestError(w, "Invalid timestamp format")
 		return
 	}
 
@@ -57,7 +60,7 @@ func (h *GetDeviceSensorDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	data, err := h.deviceService.GetDeviceSensorData(r.Context(), request.DeviceMacId, request.DateMode, baseTimestamp)
 	if err != nil {
 		log.Printf("Error getting sensor data: %v", err)
-		transport.SendError(w, http.StatusInternalServerError, "Failed to retrieve sensor data")
+		transport_http.SendError(w, http.StatusInternalServerError, "Failed to retrieve sensor data")
 		return
 	}
 
@@ -66,6 +69,47 @@ func (h *GetDeviceSensorDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		Data: data,
 	}
 
-	transport.SendResponse(w, http.StatusOK, response)
+	transport_http.SendResponse(w, http.StatusOK, response)
 }
 
+// HandleGin handles requests using Gin framework
+func (h *GetDeviceSensorDataHandler) HandleGin(c *gin.Context) {
+	// Parse request body
+	var request models.GetDeviceSensorDataRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Printf("Error decoding request: %v", err)
+		transport_gin.SendBadRequestError(c, "Invalid request format")
+		return
+	}
+
+	// Validate request
+	validationErrs := utils.Validate(request)
+	if validationErrs != nil {
+		log.Printf("Validation errors: %s", utils.ValidationErrorsToString(validationErrs))
+		transport_gin.SendBadRequestError(c, utils.CreateValidationError(validationErrs))
+		return
+	}
+
+	// Parse the timestamp
+	baseTimestamp, err := strconv.ParseInt(request.Timestamp, 10, 64)
+	if err != nil {
+		log.Printf("Error parsing timestamp: %v", err)
+		transport_gin.SendBadRequestError(c, "Invalid timestamp format")
+		return
+	}
+
+	// Call service to get sensor data
+	data, err := h.deviceService.GetDeviceSensorData(c.Request.Context(), request.DeviceMacId, request.DateMode, baseTimestamp)
+	if err != nil {
+		log.Printf("Error getting sensor data: %v", err)
+		transport_gin.SendError(c, http.StatusInternalServerError, "Failed to retrieve sensor data")
+		return
+	}
+
+	// Create response
+	response := models.GetDeviceSensorDataResponse{
+		Data: data,
+	}
+
+	transport_gin.SendResponse(c, http.StatusOK, response)
+}

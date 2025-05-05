@@ -10,11 +10,14 @@ import (
 	"time"
 
 	"n1h41/zolaris-backend-app/api/handlers"
+	"n1h41/zolaris-backend-app/internal/aws"
 	"n1h41/zolaris-backend-app/internal/config"
 	"n1h41/zolaris-backend-app/internal/db"
 	"n1h41/zolaris-backend-app/internal/middleware"
 	"n1h41/zolaris-backend-app/internal/repositories"
 	"n1h41/zolaris-backend-app/internal/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -25,9 +28,21 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
+	// Set Gin mode based on environment
+	if cfg.Server.Environment == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	// Initialize AWS clients
+	log.Println("Initializing AWS clients...")
+	awsClients, err := aws.InitAWSClients(context.Background(), cfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize AWS clients: %v", err)
+	}
+
 	// Initialize database clients
 	log.Println("Initializing database clients...")
-	database, err := db.NewDatabase(cfg)
+	database, err := db.NewDatabase(awsClients.DynamoDB, cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize database clients: %v", err)
 	}
@@ -36,8 +51,8 @@ func main() {
 	deviceRepo := repositories.NewDeviceRepository(database.GetDynamoClient())
 	// Set the table names from configuration
 	deviceRepo.WithTables(database.GetDeviceTableName(), database.GetMachineDataTableName())
-	
-	policyRepo := repositories.NewPolicyRepository(database.GetIoTClient())
+
+	policyRepo := repositories.NewPolicyRepository(awsClients.GetIoTClient())
 
 	// Initialize services
 	deviceService := services.NewDeviceService(deviceRepo)
@@ -49,47 +64,35 @@ func main() {
 	getDeviceSensorDataHandler := handlers.NewGetDeviceSensorDataHandler(deviceService)
 	listUserDevicesHandler := handlers.NewListUserDevicesHandler(deviceService)
 
-	// Create router
-	mux := http.NewServeMux()
+	// Create router with global middleware
+	r := gin.New()
 
-	// Set up private routes (require authentication)
-	mux.Handle("POST /device/add", applyMiddlewares(
-		addDeviceHandler,
-		middleware.AuthMiddleware,
-	))
-
-	mux.Handle("POST /device/sensor-data", applyMiddlewares(
-		getDeviceSensorDataHandler,
-	))
-
-	mux.Handle("GET /user/devices", applyMiddlewares(
-		listUserDevicesHandler,
-		middleware.AuthMiddleware,
-	))
-
-	// Public routes (no authentication required)
-	mux.Handle("POST /device/attach-policy", applyMiddlewares(
-		attachIotPolicyHandler,
-	))
+	// Apply global middleware
+	r.Use(middleware.GinLoggerMiddleware())
+	r.Use(gin.Recovery())
 
 	// Health check endpoint
-	mux.Handle("GET /health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	}))
+	r.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
 
-	// Create server with global middleware
-	handler := applyMiddlewares(
-		mux,
-		middleware.LoggingMiddleware,
-		middleware.RecoveryMiddleware,
-	)
+	// Group private routes (require authentication)
+	private := r.Group("/")
+	private.Use(middleware.GinAuthMiddleware())
+	{
+		private.POST("/device/add", addDeviceHandler.HandleGin)
+		private.GET("/user/devices", listUserDevicesHandler.HandleGin)
+	}
+
+	// Public routes (no authentication required)
+	r.POST("/device/attach-policy", attachIotPolicyHandler.HandleGin)
+	r.POST("/device/sensor-data", getDeviceSensorDataHandler.HandleGin)
 
 	// Create server
 	port := cfg.Server.Port
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: handler,
+		Handler: r,
 	}
 
 	// Start server in a goroutine
@@ -115,12 +118,3 @@ func main() {
 
 	log.Println("Server exited properly")
 }
-
-// applyMiddlewares applies a chain of middleware to a handler
-func applyMiddlewares(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
-	for i := len(middlewares) - 1; i >= 0; i-- {
-		h = middlewares[i](h)
-	}
-	return h
-}
-

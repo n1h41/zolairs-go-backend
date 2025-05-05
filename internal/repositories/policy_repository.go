@@ -28,4 +28,3 @@ func (r *PolicyRepository) AttachPolicy(ctx context.Context, policyName, identit
 	_, err := r.iotClient.AttachPolicy(ctx, input)
 	return err
 }
-

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 // Config represents the application configuration
@@ -15,7 +17,8 @@ type Config struct {
 
 // ServerConfig holds server-related configuration
 type ServerConfig struct {
-	Port int
+	Port        int
+	Environment string
 }
 
 // DatabaseConfig holds database-related configuration
@@ -29,10 +32,32 @@ type DatabaseConfig struct {
 type AWSConfig struct {
 	Region    string
 	IoTPolicy string
+	Profile   string
+}
+
+// LoadEnv loads environment variables from .env files
+func LoadEnv() error {
+	// Try to load environment-specific .env file first
+	environment := os.Getenv("ENVIRONMENT")
+	if environment == "" {
+		environment = "development" // Default to development
+	}
+
+	// Try environment specific file (.env.development, .env.production, etc)
+	err := godotenv.Load(".env."+environment, ".env")
+	if err != nil {
+		// We'll just log the error and continue, as the .env file might not exist in all environments
+		fmt.Printf("Warning: Error loading environment files: %v\n", err)
+	}
+	return err
 }
 
 // LoadConfig loads configuration from environment variables
 func LoadConfig() (*Config, error) {
+	// Try to load environment variables from .env files
+	// We ignore the error as it's not fatal if .env files don't exist
+	_ = LoadEnv()
+
 	config := &Config{}
 
 	// Server config
@@ -42,15 +67,50 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("invalid PORT value: %v", err)
 	}
 	config.Server.Port = port
+	config.Server.Environment = getEnv("ENVIRONMENT", "development")
 
 	// Database config
-	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "devices")
-	config.Database.DataTableName = getEnv("DATA_TABLE_NAME", "machine_data")
-	config.Database.UserTableName = getEnv("USER_TABLE_NAME", "users")
+	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "machine_table")
+	config.Database.DataTableName = getEnv("DATA_TABLE_NAME", "machine_data_table")
+	config.Database.UserTableName = getEnv("USER_TABLE_NAME", "user_table")
 
 	// AWS config
 	config.AWS.Region = getEnv("AWS_REGION", "us-east-1")
-	config.AWS.IoTPolicy = getEnv("IOT_POLICY_NAME", "DefaultIoTPolicy")
+	config.AWS.IoTPolicy = getEnv("IOT_POLICY_NAME", "iot_p")
+	config.AWS.Profile = getEnv("AWS_PROFILE", "default")
+
+	return config, nil
+}
+
+// LoadConfigWithPath loads configuration using explicit .env file paths
+func LoadConfigWithPath(envPaths ...string) (*Config, error) {
+	// Load specified env files
+	if len(envPaths) > 0 {
+		err := godotenv.Load(envPaths...)
+		if err != nil {
+			fmt.Printf("Warning: Error loading specified environment files: %v\n", err)
+		}
+	}
+
+	config := &Config{}
+
+	// Server config
+	portStr := getEnv("PORT", "8080")
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid PORT value: %v", err)
+	}
+	config.Server.Port = port
+	config.Server.Environment = getEnv("ENVIRONMENT", "development")
+
+	// Database config
+	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "machine_table")
+	config.Database.DataTableName = getEnv("DATA_TABLE_NAME", "machine_data_table")
+	config.Database.UserTableName = getEnv("USER_TABLE_NAME", "user_table")
+
+	// AWS config
+	config.AWS.Region = getEnv("AWS_REGION", "us-east-1")
+	config.AWS.IoTPolicy = getEnv("IOT_POLICY_NAME", "iot_p")
 
 	return config, nil
 }
@@ -63,4 +123,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return value
 }
-
