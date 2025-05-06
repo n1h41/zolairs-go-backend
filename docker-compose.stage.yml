@@ -1,13 +1,14 @@
 services:
-  app-dev:
+  app-stage:
     # env_file: ./.env.development
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.stage
 
     ports:
       - "8080:8080"
     environment:
+      - ENVIRONMENT=staging
       - PORT=8080
       - DEVICE_TABLE_NAME=${DEVICE_TABLE_NAME}
       - DATA_TABLE_NAME=${DATA_TABLE_NAME}
@@ -19,7 +20,6 @@ services:
     volumes:
       - ./:/app
     restart: unless-stopped
-    command: air
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 30s
