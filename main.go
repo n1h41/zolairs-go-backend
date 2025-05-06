@@ -17,6 +17,7 @@ import (
 	"n1h41/zolaris-backend-app/internal/repositories"
 	"n1h41/zolaris-backend-app/internal/services"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -66,6 +67,16 @@ func main() {
 
 	// Create router with global middleware
 	r := gin.New()
+
+	// Set up CORS
+	r.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "X-User-ID"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           1 * time.Hour,
+	}))
 
 	// Apply global middleware
 	r.Use(middleware.GinLoggerMiddleware())
