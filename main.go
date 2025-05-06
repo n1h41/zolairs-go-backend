@@ -70,7 +70,18 @@ func main() {
 
 	// Set up CORS
 	r.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
+		AllowOriginFunc: func(origin string) bool {
+			// Allow frontend origins
+			if origin == "https://staging.duvw6ii0xapud.amplifyapp.com" {
+				return true
+			}
+			// Allow all localhost origins
+			log.Printf("Origin: %s", origin)
+			if len(origin) > 16 && origin[:16] == "http://localhost" {
+				return true
+			}
+			return false
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "X-User-ID"},
 		ExposeHeaders:    []string{"Content-Length"},
