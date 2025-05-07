@@ -6,6 +6,7 @@ services:
     ports:
       - "80:8080"
     environment:
+      - EXTERNAL_URL=http://3.110.190.71
       - ENVIRONMENT=staging
       - PORT=8080
       - DEVICE_TABLE_NAME=machine_table
