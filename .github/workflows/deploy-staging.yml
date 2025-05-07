@@ -43,7 +43,7 @@ jobs:
       - name: Deploy to Staging Server
         run: |
           ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd ~/app/zolaris-go-backend
+            cd ~/app/zolaris-backend
             docker-compose -f docker-compose.stage.yml pull
             docker-compose -f docker-compose.stage.yml up -d --build
           EOF
