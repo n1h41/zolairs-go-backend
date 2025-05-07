@@ -1,24 +1,20 @@
 services:
   app-stage:
-    # env_file: ./.env.development
-    build:
-      context: .
-      dockerfile: Dockerfile.stage
+    container_name: zolaris-go-backend-stage
+    image: 864981729345.dkr.ecr.ap-south-1.amazonaws.com/zolaris-go-app:staging
 
     ports:
-      - "8080:8080"
+      - "80:8080"
     environment:
       - ENVIRONMENT=staging
       - PORT=8080
-      - DEVICE_TABLE_NAME=${DEVICE_TABLE_NAME}
-      - DATA_TABLE_NAME=${DATA_TABLE_NAME}
-      - USER_TABLE_NAME=${USER_TABLE_NAME}
-      - IOT_POLICY_NAME=${IOT_POLICY_NAME}
+      - DEVICE_TABLE_NAME=machine_table
+      - DATA_TABLE_NAME=machine_data_table
+      - USER_TABLE_NAME=user_table
+      - IOT_POLICY_NAME=iot_p
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
-    volumes:
-      - ./:/app
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]

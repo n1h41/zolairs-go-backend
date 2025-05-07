@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -39,6 +39,10 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > private_key
           chmod 600 private_key
           # ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+      
+      - name: Copy Compose File to Server
+        run: |
+          scp -i private_key -o StrictHostKeyChecking=no docker-compose.stage.yml ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:~/app/zolaris-backend/
 
       - name: Deploy to Staging Server
         run: |
