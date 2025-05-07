@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"n1h41/zolaris-backend-app/api/handlers"
+	"n1h41/zolaris-backend-app/docs"
 	"n1h41/zolaris-backend-app/internal/aws"
 	"n1h41/zolaris-backend-app/internal/config"
 	"n1h41/zolaris-backend-app/internal/db"
@@ -19,6 +20,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -28,6 +31,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
+
+	// Initialize Swagger documentation
+	docs.SwaggerInfo.Title = "Zolaris Backend API"
+	docs.SwaggerInfo.Description = "API for IoT device management"
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.BasePath = "/"
+	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
 	// Set Gin mode based on environment
 	if cfg.Server.Environment == "production" {
@@ -68,6 +78,15 @@ func main() {
 	// Create router with global middleware
 	r := gin.New()
 
+	// Set up Swagger endpoint with dynamic host based on environment
+	swaggerHost := fmt.Sprintf("http://localhost:%d", cfg.Server.Port)
+	if cfg.Server.Environment == "production" || cfg.Server.Environment == "staging" {
+		// In production/staging, use the actual host (could be set from config)
+		swaggerHost = cfg.Server.ExternalURL
+	}
+	swaggerURL := ginSwagger.URL(fmt.Sprintf("%s/swagger/doc.json", swaggerHost))
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler, swaggerURL))
+
 	// Set up CORS
 	r.Use(cors.New(cors.Config{
 		AllowOriginFunc: func(origin string) bool {
@@ -94,6 +113,13 @@ func main() {
 	r.Use(gin.Recovery())
 
 	// Health check endpoint
+	// @Summary Health check
+	// @Description Check if the API is running
+	// @Tags System
+	// @Accept json
+	// @Produce plain
+	// @Success 200 {string} string "OK"
+	// @Router /health [get]
 	r.GET("/health", func(c *gin.Context) {
 		c.String(http.StatusOK, "OK")
 	})

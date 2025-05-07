@@ -8,7 +8,6 @@ import (
 	"n1h41/zolaris-backend-app/internal/middleware"
 	"n1h41/zolaris-backend-app/internal/services"
 	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
-	transport_http "n1h41/zolaris-backend-app/internal/transport/http"
 )
 
 // ListUserDevicesHandler handles requests to list devices for a user
@@ -21,33 +20,17 @@ func NewListUserDevicesHandler(deviceService *services.DeviceService) *ListUserD
 	return &ListUserDevicesHandler{deviceService: deviceService}
 }
 
-// ServeHTTP implements http.Handler interface (for backward compatibility)
-func (h *ListUserDevicesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Only allow GET method
-	if r.Method != http.MethodGet {
-		transport_http.SendError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	// Get user ID from context (set by auth middleware)
-	userID := middleware.GetUserID(r)
-	if userID == "" {
-		transport_http.SendError(w, http.StatusUnauthorized, "User not authenticated")
-		return
-	}
-
-	// Call service to get user devices
-	devices, err := h.deviceService.GetUserDevices(r.Context(), userID)
-	if err != nil {
-		log.Printf("Error getting user devices: %v", err)
-		transport_http.SendError(w, http.StatusInternalServerError, "Failed to retrieve user devices")
-		return
-	}
-
-	transport_http.SendResponse(w, http.StatusOK, devices)
-}
-
 // HandleGin handles requests using Gin framework
+// @Summary List user devices
+// @Description Get all devices registered to the authenticated user
+// @Tags Device Management
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.DeviceResponse "List of user devices"
+// @Failure 401 {object} transport_gin.ErrorResponse "User not authenticated"
+// @Failure 500 {object} transport_gin.ErrorResponse "Internal server error"
+// @Security ApiKeyAuth
+// @Router /user/devices [get]
 func (h *ListUserDevicesHandler) HandleGin(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserIDFromGin(c)
