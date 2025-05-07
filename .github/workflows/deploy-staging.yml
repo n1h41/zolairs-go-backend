@@ -47,3 +47,4 @@ jobs:
             docker-compose -f docker-compose.stage.yml pull
             docker-compose -f docker-compose.stage.yml up -d --build
           EOF
+
