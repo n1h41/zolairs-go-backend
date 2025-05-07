@@ -1,0 +1,73 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+env:
+  IMAGE_NAME: zolaris-go-app
+  ECR_REGION: ap-south-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.ECR_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:staging
+          docker build -t $IMAGE_URI -f Dockerfile.stage .
+          docker push $IMAGE_URI
+
+      - name: Add SSH Key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > private_key
+          chmod 600 private_key
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+      
+      - name: Copy Compose File to Server
+        run: |
+          scp -i private_key -o StrictHostKeyChecking=no docker-compose.stage.yml ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:~/app/zolaris-backend/
+
+      - name: Update Docker and Docker Compose on Server
+        run: |
+          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            # Update Docker if needed
+            sudo apt-get update
+            # Install/update Docker Compose plugin
+            sudo apt-get install -y docker-compose-v2
+            # Check versions
+            docker --version
+            docker compose version
+          EOF
+
+      - name: Deploy to Staging Server
+        run: |
+          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ~/app/zolaris-backend
+            aws ecr get-login-password --region ${{ env.ECR_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+            
+            # Try using Docker Compose V2 command
+            docker compose -f docker-compose.stage.yml pull
+            docker compose -f docker-compose.stage.yml up -d
+            
+            # Check container status
+            docker ps
+          EOF
+
