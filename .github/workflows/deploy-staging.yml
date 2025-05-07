@@ -31,25 +31,43 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:staging
-          docker build -t $IMAGE_URI .
+          docker build -t $IMAGE_URI -f Dockerfile.stage .
           docker push $IMAGE_URI
 
       - name: Add SSH Key
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > private_key
           chmod 600 private_key
-          # ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
       
       - name: Copy Compose File to Server
         run: |
           scp -i private_key -o StrictHostKeyChecking=no docker-compose.stage.yml ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:~/app/zolaris-backend/
+
+      - name: Update Docker and Docker Compose on Server
+        run: |
+          ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            # Update Docker if needed
+            sudo apt-get update
+            # Install/update Docker Compose plugin
+            sudo apt-get install -y docker-compose-plugin
+            # Check versions
+            docker --version
+            docker compose version
+          EOF
 
       - name: Deploy to Staging Server
         run: |
           ssh -i private_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             cd ~/app/zolaris-backend
             aws ecr get-login-password --region ${{ env.ECR_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
-            docker-compose -f docker-compose.stage.yml pull
-            docker-compose -f docker-compose.stage.yml up -d --build
+            
+            # Try using Docker Compose V2 command
+            docker compose -f docker-compose.stage.yml pull
+            docker compose -f docker-compose.stage.yml up -d
+            
+            # Check container status
+            docker ps
           EOF
 
