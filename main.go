@@ -22,6 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"slices"
 )
 
 func main() {
@@ -90,12 +91,15 @@ func main() {
 	// Set up CORS
 	r.Use(cors.New(cors.Config{
 		AllowOriginFunc: func(origin string) bool {
-			// Allow frontend origins
-			if origin == "https://staging.duvw6ii0xapud.amplifyapp.com" {
+			// Allow specific origins
+			allowedOrigins := []string{
+				"http://3.110.190.71",
+				"https://staging.duvw6ii0xapud.amplifyapp.com",
+			}
+			if slices.Contains(allowedOrigins, origin) {
 				return true
 			}
 			// Allow all localhost origins
-			log.Printf("Origin: %s", origin)
 			if len(origin) > 16 && origin[:16] == "http://localhost" {
 				return true
 			}
