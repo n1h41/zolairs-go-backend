@@ -28,6 +28,7 @@ func NewAddDeviceHandler(deviceService *services.DeviceService) *AddDeviceHandle
 // @Tags Device Management
 // @Accept json
 // @Produce json
+// @Param X-User-ID header string true "User ID"
 // @Param device body models.AddDeviceRequest true "Device information"
 // @Success 201 {object} transport_gin.Response "Device added successfully"
 // @Failure 400 {object} transport_gin.ErrorResponse "Validation error"

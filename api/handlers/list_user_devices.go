@@ -26,6 +26,7 @@ func NewListUserDevicesHandler(deviceService *services.DeviceService) *ListUserD
 // @Tags Device Management
 // @Accept json
 // @Produce json
+// @Param X-User-ID header string true "User ID"
 // @Success 200 {array} models.DeviceResponse "List of user devices"
 // @Failure 401 {object} transport_gin.ErrorResponse "User not authenticated"
 // @Failure 500 {object} transport_gin.ErrorResponse "Internal server error"
