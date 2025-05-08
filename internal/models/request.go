@@ -18,3 +18,10 @@ type AddDeviceRequest struct {
 	DeviceName string `json:"deviceName" validate:"required,min=1,max=100"`
 }
 
+// AddCategoryRequest represents a request to add a new category
+type AddCategoryRequest struct {
+	Name string `json:"name" validate:"required,min=2,max=50"`
+	Type string `json:"type" validate:"required,min=2,max=50"`
+}
+
+

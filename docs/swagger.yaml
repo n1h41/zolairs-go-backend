@@ -25,6 +25,20 @@ definitions:
         example: true
         type: boolean
     type: object
+  models.AddCategoryRequest:
+    properties:
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      type:
+        maxLength: 50
+        minLength: 2
+        type: string
+    required:
+    - name
+    - type
+    type: object
   models.AddDeviceRequest:
     properties:
       deviceId:
@@ -45,6 +59,13 @@ definitions:
         type: string
     required:
     - identityId
+    type: object
+  models.CategoryResponse:
+    properties:
+      name:
+        type: string
+      type:
+        type: string
     type: object
   models.DeviceResponse:
     properties:
@@ -94,12 +115,78 @@ definitions:
 info:
   contact: {}
 paths:
+  /category/add:
+    post:
+      consumes:
+      - application/json
+      description: Register a new category
+      parameters:
+      - description: Category information
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/models.AddCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Category added successfully
+          schema:
+            $ref: '#/definitions/gin.Response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
+        "409":
+          description: Category already exists
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
+      summary: Add a new category
+      tags:
+      - Category Management
+  /category/type/{type}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all categories of a specific type
+      parameters:
+      - description: Category type
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of categories
+          schema:
+            items:
+              $ref: '#/definitions/models.CategoryResponse'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
+      summary: Get categories by type
+      tags:
+      - Category Management
   /device/add:
     post:
       consumes:
       - application/json
       description: Register a new IoT device for the authenticated user
       parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
       - description: Device information
         in: body
         name: device
@@ -195,6 +282,12 @@ paths:
       consumes:
       - application/json
       description: Get all devices registered to the authenticated user
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
       produces:
       - application/json
       responses:
