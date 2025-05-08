@@ -21,17 +21,17 @@ func NewCategoryService(categoryRepo *repositories.CategoryRepository) *Category
 // AddCategory handles the business logic for adding a new category
 func (s *CategoryService) AddCategory(ctx context.Context, name, categoryType string) error {
 	log.Printf("Adding category %s of type %s", name, categoryType)
-	
+
 	// Check if category already exists
 	existingCategory, err := s.categoryRepo.GetCategoryByName(ctx, name)
 	if err != nil {
 		return err
 	}
-	
+
 	if existingCategory != nil {
 		return errors.New("category with this name already exists")
 	}
-	
+
 	return s.categoryRepo.AddCategory(ctx, name, categoryType)
 }
 
@@ -47,3 +47,7 @@ func (s *CategoryService) GetCategoriesByType(ctx context.Context, categoryType 
 	return s.categoryRepo.GetCategoriesByType(ctx, categoryType)
 }
 
+func (s *CategoryService) GetAllCategories(ctx context.Context) ([]models.CategoryResponse, error) {
+	log.Println("List all categories")
+	return s.categoryRepo.ListAllCategories(ctx)
+}

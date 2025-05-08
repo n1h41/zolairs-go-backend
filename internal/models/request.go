@@ -9,7 +9,7 @@ type AttachIotPolicyRequest struct {
 type GetDeviceSensorDataRequest struct {
 	DeviceMacId string `json:"deviceMacId" validate:"required"`
 	Timestamp   string `json:"timestamp" validate:"required"`
-	DateMode    string `json:"dateMode" validate:"required,oneof=hourly daily weekly monthly"`
+	DateMode    string `json:"dateMode" validate:"required,oneof=hourly daily weekly monthly yearly"`
 }
 
 // AddDeviceRequest represents a request to add a new device

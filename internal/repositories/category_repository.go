@@ -106,3 +106,25 @@ func (r *CategoryRepository) GetCategoriesByType(ctx context.Context, categoryTy
 	return categories, nil
 }
 
+// ListAllCategories retrieves all categories from the database
+func (r *CategoryRepository) ListAllCategories(ctx context.Context) ([]models.CategoryResponse, error) {
+	// Create scan input
+	input := &dynamodb.ScanInput{
+		TableName: aws.String(r.categoryTable),
+	}
+
+	// Execute the scan
+	result, err := r.db.Scan(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal the results
+	var categories []models.CategoryResponse
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &categories)
+	if err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}

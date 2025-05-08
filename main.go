@@ -82,6 +82,7 @@ func main() {
 	listUserDevicesHandler := handlers.NewListUserDevicesHandler(deviceService)
 	addCategoryHandler := handlers.NewAddCategoryHandler(categoryService)
 	getCategoriesByTypeHandler := handlers.NewGetCategoriesByTypeHandler(categoryService)
+  listAllCategoriesHandler := handlers.NewListAllCategoriesHandler(categoryService)
 
 	// Create router with global middleware
 	r := gin.New()
@@ -148,6 +149,7 @@ func main() {
 	r.POST("/device/sensor-data", getDeviceSensorDataHandler.HandleGin)
 	r.POST("/category/add", addCategoryHandler.HandleGin)
 	r.GET("/category/type/:type", getCategoriesByTypeHandler.HandleGin)
+  r.GET("/category/all", listAllCategoriesHandler.HandleGin)
 
 	// Create server
 	port := cfg.Server.Port
