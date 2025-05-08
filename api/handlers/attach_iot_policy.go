@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
@@ -9,7 +8,6 @@ import (
 	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
 	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
-	transport_http "n1h41/zolaris-backend-app/internal/transport/http"
 	"n1h41/zolaris-backend-app/internal/utils"
 )
 
@@ -23,41 +21,17 @@ func NewAttachIotPolicyHandler(policyService *services.PolicyService) *AttachIot
 	return &AttachIotPolicyHandler{policyService: policyService}
 }
 
-// ServeHTTP implements http.Handler interface (for backward compatibility)
-func (h *AttachIotPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Only allow POST method
-	if r.Method != http.MethodPost {
-		transport_http.SendError(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
-
-	// Parse request body
-	var request models.AttachIotPolicyRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		log.Printf("Error decoding request: %v", err)
-		transport_http.SendBadRequestError(w, "Invalid request format")
-		return
-	}
-
-	// Validate request
-	validationErrs := utils.Validate(request)
-	if validationErrs != nil {
-		log.Printf("Validation errors: %s", utils.ValidationErrorsToString(validationErrs))
-		transport_http.SendBadRequestError(w, utils.CreateValidationError(validationErrs))
-		return
-	}
-
-	// Call service to attach policy
-	if err := h.policyService.AttachIoTPolicy(r.Context(), request.IdentityId); err != nil {
-		log.Printf("Error attaching IoT policy: %v", err)
-		transport_http.SendError(w, http.StatusInternalServerError, "Failed to attach IoT policy")
-		return
-	}
-
-	transport_http.SendResponse(w, http.StatusOK, "IoT policy attached successfully")
-}
-
 // HandleGin handles requests using Gin framework
+// @Summary Attach IoT policy
+// @Description Attach an AWS IoT policy to a Cognito identity
+// @Tags Policy Management
+// @Accept json
+// @Produce json
+// @Param request body models.AttachIotPolicyRequest true "Identity information"
+// @Success 200 {object} transport_gin.Response "IoT policy attached successfully"
+// @Failure 400 {object} transport_gin.ErrorResponse "Invalid request or validation error"
+// @Failure 500 {object} transport_gin.ErrorResponse "Failed to attach IoT policy"
+// @Router /device/attach-policy [post]
 func (h *AttachIotPolicyHandler) HandleGin(c *gin.Context) {
 	// Parse request body
 	var request models.AttachIotPolicyRequest

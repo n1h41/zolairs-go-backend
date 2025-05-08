@@ -7,6 +7,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Response is the standard successful response structure
+// @Description Standard API success response format
+type Response struct {
+	// Indicates success status
+	Status bool `json:"status" example:"true"`
+	// Optional success message
+	Message string `json:"message,omitempty" example:"Operation successful"`
+	// Optional data payload
+	Data any `json:"data,omitempty"`
+}
+
+// ErrorResponse is the standard error response structure
+// @Description Standard API error response format
+type ErrorResponse struct {
+	// Always false for errors
+	Status bool `json:"status" example:"false"`
+	// Error message
+	Message string `json:"message" example:"Something went wrong"`
+}
+
 // SendResponse sends a successful JSON response
 func SendResponse(c *gin.Context, statusCode int, data any) {
 	resp := gin.H{
@@ -50,3 +70,4 @@ func SendError(c *gin.Context, statusCode int, err any) {
 func SendBadRequestError(c *gin.Context, err any) {
 	SendError(c, http.StatusBadRequest, err)
 }
+

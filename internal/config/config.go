@@ -19,6 +19,7 @@ type Config struct {
 type ServerConfig struct {
 	Port        int
 	Environment string
+	ExternalURL string
 }
 
 // DatabaseConfig holds database-related configuration
@@ -67,6 +68,7 @@ func LoadConfig() (*Config, error) {
 	}
 	config.Server.Port = port
 	config.Server.Environment = getEnv("ENVIRONMENT", "development")
+  config.Server.ExternalURL = getEnv("EXTERNAL_URL", "http://localhost:8080")
 
 	// Database config
 	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "DEVICE_TABLE_NAME")
@@ -100,6 +102,7 @@ func LoadConfigWithPath(envPaths ...string) (*Config, error) {
 	}
 	config.Server.Port = port
 	config.Server.Environment = getEnv("ENVIRONMENT", "development")
+  config.Server.ExternalURL = getEnv("EXTERNAL_URL", "http://localhost:8080")
 
 	// Database config
 	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "machine_table")

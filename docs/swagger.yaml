@@ -1,282 +1,220 @@
-openapi: 3.0.0
+definitions:
+  gin.ErrorResponse:
+    description: Standard API error response format
+    properties:
+      message:
+        description: Error message
+        example: Something went wrong
+        type: string
+      status:
+        description: Always false for errors
+        example: false
+        type: boolean
+    type: object
+  gin.Response:
+    description: Standard API success response format
+    properties:
+      data:
+        description: Optional data payload
+      message:
+        description: Optional success message
+        example: Operation successful
+        type: string
+      status:
+        description: Indicates success status
+        example: true
+        type: boolean
+    type: object
+  models.AddDeviceRequest:
+    properties:
+      deviceId:
+        maxLength: 50
+        minLength: 3
+        type: string
+      deviceName:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - deviceId
+    - deviceName
+    type: object
+  models.AttachIotPolicyRequest:
+    properties:
+      identityId:
+        type: string
+    required:
+    - identityId
+    type: object
+  models.DeviceResponse:
+    properties:
+      device_name:
+        type: string
+      mac_address:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.GetDeviceSensorDataRequest:
+    properties:
+      dateMode:
+        enum:
+        - hourly
+        - daily
+        - weekly
+        - monthly
+        type: string
+      deviceMacId:
+        type: string
+      timestamp:
+        type: string
+    required:
+    - dateMode
+    - deviceMacId
+    - timestamp
+    type: object
+  models.GetDeviceSensorDataResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.SensorData'
+        type: array
+    type: object
+  models.SensorData:
+    properties:
+      amperage:
+        type: string
+      humidity:
+        type: string
+      temperature:
+        type: string
+      timestamp:
+        type: integer
+    type: object
 info:
-  title: Zolaris Backend API
-  description: API for Zolaris backend application that manages IoT devices and policies
-  version: 1.0.0
-servers:
-  - url: https://{serverlessRestApi}.execute-api.{region}.amazonaws.com/Prod
-    variables:
-      serverlessRestApi:
-        default: yourApiId
-        description: API Gateway ID
-      region:
-        default: us-east-1
-        description: AWS Region
-  - url: http://localhost:8080
-    description: Local development server
-tags:
-  - name: Device Management
-    description: Operations related to IoT device management
-  - name: IoT Management
-    description: Operations related to IoT policies and certificates
-  - name: Sensor Data
-    description: Operations related to device sensor data
+  contact: {}
 paths:
-  /attach-iot-policy:
+  /device/add:
     post:
-      summary: Attach IoT Policy to a device
-      description: Attaches an IoT policy to a specified identity
-      operationId: attachIotPolicy
-      tags:
-        - IoT Management
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AttachIotPolicyRequest'
-      responses:
-        "200":
-          description: Policy successfully attached
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "IoT policy attached successfully"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        "401":
-          description: Unauthorized
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /user/{userId}/device:
-    post:
-      summary: Add a new device for a user
-      description: Registers a new IoT device for the specified user
-      operationId: addDevice
-      tags:
-        - Device Management
-      security:
-        - BearerAuth: []
+      consumes:
+      - application/json
+      description: Register a new IoT device for the authenticated user
       parameters:
-        - name: userId
-          in: path
-          required: true
-          description: ID of the user
-          schema:
-            type: string
-      requestBody:
+      - description: Device information
+        in: body
+        name: device
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddDeviceRequest'
+        schema:
+          $ref: '#/definitions/models.AddDeviceRequest'
+      produces:
+      - application/json
       responses:
         "201":
-          description: Device successfully added
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Device added successfully"
+          description: Device added successfully
+          schema:
+            $ref: '#/definitions/gin.Response'
         "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: Validation error
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
         "401":
-          description: Unauthorized
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
         "500":
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    get:
-      summary: List user devices
-      description: Returns a list of all devices registered to a user
-      operationId: listUserDevices
-      tags:
-        - Device Management
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          description: ID of the user
           schema:
-            type: string
+            $ref: '#/definitions/gin.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Add a new device
+      tags:
+      - Device Management
+  /device/attach-policy:
+    post:
+      consumes:
+      - application/json
+      description: Attach an AWS IoT policy to a Cognito identity
+      parameters:
+      - description: Identity information
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.AttachIotPolicyRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          description: List of devices
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DeviceResponse'
-        "401":
-          description: Unauthorized
+          description: IoT policy attached successfully
+          schema:
+            $ref: '#/definitions/gin.Response'
+        "400":
+          description: Invalid request or validation error
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
         "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: Failed to attach IoT policy
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
+      summary: Attach IoT policy
+      tags:
+      - Policy Management
   /device/sensor-data:
     post:
-      summary: Get device sensor data
-      description: Retrieves sensor data for a specific device by MAC ID
-      operationId: getDeviceSensorData
-      tags:
-        - Sensor Data
-      security:
-        - BearerAuth: []
-      requestBody:
+      consumes:
+      - application/json
+      description: Retrieve sensor data for a specific device with time filtering
+      parameters:
+      - description: Request parameters
+        in: body
+        name: request
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetDeviceSensorDataRequest'
+        schema:
+          $ref: '#/definitions/models.GetDeviceSensorDataRequest'
+      produces:
+      - application/json
       responses:
         "200":
-          description: Sensor data retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetDeviceSensorDataResponse'
+          description: Sensor data for the device
+          schema:
+            $ref: '#/definitions/models.GetDeviceSensorDataResponse'
         "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          description: Invalid request or validation error
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
         "500":
           description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-  schemas:
-    AttachIotPolicyRequest:
-      type: object
-      required:
-        - identityId
-      properties:
-        identityId:
-          type: string
-          description: The identity ID to attach the policy to
-          example: "us-east-1:12345678-1234-1234-1234-123456789012"
-    AddDeviceRequest:
-      type: object
-      required:
-        - deviceId
-        - deviceName
-      properties:
-        deviceId:
-          type: string
-          description: Unique identifier for the device (MAC address)
-          minLength: 3
-          maxLength: 50
-          example: "AA:BB:CC:DD:EE:FF"
-        deviceName:
-          type: string
-          description: Name of the device
-          minLength: 1
-          maxLength: 100
-          example: "Living Room Sensor"
-    GetDeviceSensorDataRequest:
-      type: object
-      required:
-        - deviceMacId
-        - timestamp
-        - dateMode
-      properties:
-        deviceMacId:
-          type: string
-          description: MAC address of the device
-          example: "AA:BB:CC:DD:EE:FF"
-        timestamp:
-          type: string
-          description: Base timestamp for the query (Unix timestamp)
-          example: "1682956800"
-        dateMode:
-          type: string
-          description: Date mode for aggregating sensor data
-          enum: [hourly, daily, weekly, monthly]
-          example: "daily"
-    DeviceResponse:
-      type: object
-      properties:
-        mac_address:
-          type: string
-          description: MAC address of the device
-          example: "AA:BB:CC:DD:EE:FF"
-        user_id:
-          type: string
-          description: ID of the user who owns the device
-          example: "user123"
-        device_name:
-          type: string
-          description: Name of the device
-          example: "Living Room Sensor"
-    SensorData:
-      type: object
-      properties:
-        timestamp:
-          type: integer
-          format: int64
-          description: Timestamp when the data was recorded
-          example: 1682956800
-        amperage:
-          type: string
-          description: Current amperage reading
-          example: "1.5"
-        temperature:
-          type: string
-          description: Temperature reading
-          example: "23.5"
-        humidity:
-          type: string
-          description: Humidity reading
-          example: "45.2"
-    GetDeviceSensorDataResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          description: List of sensor readings
-          items:
-            $ref: '#/components/schemas/SensorData'
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Error message
-          example: "Invalid request format"
-
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
+      summary: Get device sensor data
+      tags:
+      - Device Data
+  /user/devices:
+    get:
+      consumes:
+      - application/json
+      description: Get all devices registered to the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of user devices
+          schema:
+            items:
+              $ref: '#/definitions/models.DeviceResponse'
+            type: array
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List user devices
+      tags:
+      - Device Management
+swagger: "2.0"
