@@ -84,6 +84,7 @@ definitions:
         - daily
         - weekly
         - monthly
+        - yearly
         type: string
       deviceMacId:
         type: string
@@ -147,6 +148,25 @@ paths:
           schema:
             $ref: '#/definitions/gin.ErrorResponse'
       summary: Add a new category
+      tags:
+      - Category Management
+  /category/all:
+    get:
+      description: Retrieve all categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of categories
+          schema:
+            items:
+              $ref: '#/definitions/models.CategoryResponse'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gin.ErrorResponse'
+      summary: Get all categories
       tags:
       - Category Management
   /category/type/{type}:

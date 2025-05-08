@@ -67,6 +67,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/category/all": {
+            "get": {
+                "description": "Retrieve all categories",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Category Management"
+                ],
+                "summary": "Get all categories",
+                "responses": {
+                    "200": {
+                        "description": "List of categories",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.CategoryResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/category/type/{type}": {
             "get": {
                 "description": "Retrieve all categories of a specific type",
@@ -441,7 +470,8 @@ const docTemplate = `{
                         "hourly",
                         "daily",
                         "weekly",
-                        "monthly"
+                        "monthly",
+                        "yearly"
                     ]
                 },
                 "deviceMacId": {
