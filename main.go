@@ -7,7 +7,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"n1h41/zolaris-backend-app/api/handlers"
 	"n1h41/zolaris-backend-app/docs"
@@ -17,12 +23,6 @@ import (
 	"n1h41/zolaris-backend-app/internal/middleware"
 	"n1h41/zolaris-backend-app/internal/repositories"
 	"n1h41/zolaris-backend-app/internal/services"
-
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"slices"
 )
 
 func main() {
@@ -61,19 +61,17 @@ func main() {
 
 	// Initialize repositories
 	deviceRepo := repositories.NewDeviceRepository(database.GetDynamoClient())
-	// Set the table names from configuration
-	deviceRepo.WithTables(database.GetDeviceTableName(), database.GetMachineDataTableName())
-
 	policyRepo := repositories.NewPolicyRepository(awsClients.GetIoTClient())
-
-	// Initialize category repository
 	categoryRepo := repositories.NewCategoryRepository(database.GetDynamoClient())
-	// Use default table name "categoryTable" as defined in the repository
+	userRepo := repositories.NewUserRepository(database.GetDynamoClient())
+
+	deviceRepo.WithTables(database.GetDeviceTableName(), database.GetMachineDataTableName())
 
 	// Initialize services
 	deviceService := services.NewDeviceService(deviceRepo)
 	policyService := services.NewPolicyService(policyRepo, cfg.AWS.IoTPolicy)
 	categoryService := services.NewCategoryService(categoryRepo)
+	userService := services.NewUserService(userRepo)
 
 	// Initialize handlers
 	addDeviceHandler := handlers.NewAddDeviceHandler(deviceService)
@@ -82,7 +80,8 @@ func main() {
 	listUserDevicesHandler := handlers.NewListUserDevicesHandler(deviceService)
 	addCategoryHandler := handlers.NewAddCategoryHandler(categoryService)
 	getCategoriesByTypeHandler := handlers.NewGetCategoriesByTypeHandler(categoryService)
-  listAllCategoriesHandler := handlers.NewListAllCategoriesHandler(categoryService)
+	listAllCategoriesHandler := handlers.NewListAllCategoriesHandler(categoryService)
+	checkParentIDHandler := handlers.NewCheckHasParentIDHandler(userService)
 
 	// Create router with global middleware
 	r := gin.New()
@@ -142,6 +141,7 @@ func main() {
 	{
 		private.POST("/device/add", addDeviceHandler.HandleGin)
 		private.GET("/user/devices", listUserDevicesHandler.HandleGin)
+		private.GET("/user/check-parent-id", checkParentIDHandler.HandleGin)
 	}
 
 	// Public routes (no authentication required)
@@ -149,7 +149,7 @@ func main() {
 	r.POST("/device/sensor-data", getDeviceSensorDataHandler.HandleGin)
 	r.POST("/category/add", addCategoryHandler.HandleGin)
 	r.GET("/category/type/:type", getCategoriesByTypeHandler.HandleGin)
-  r.GET("/category/all", listAllCategoriesHandler.HandleGin)
+	r.GET("/category/all", listAllCategoriesHandler.HandleGin)
 
 	// Create server
 	port := cfg.Server.Port
