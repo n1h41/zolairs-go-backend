@@ -24,9 +24,15 @@ type ServerConfig struct {
 
 // DatabaseConfig holds database-related configuration
 type DatabaseConfig struct {
-	DeviceTableName string
-	DataTableName   string
-	UserTableName   string
+	DeviceTableName  string
+	DataTableName    string
+	UserTableName    string
+	PostgresHost     string
+	PostgresPort     string
+	PostgresUser     string
+	PostgresPassword string
+	PostgresDBName   string
+	PostgresSSLMode  string
 }
 
 // AWSConfig holds AWS-related configuration
@@ -68,12 +74,18 @@ func LoadConfig() (*Config, error) {
 	}
 	config.Server.Port = port
 	config.Server.Environment = getEnv("ENVIRONMENT", "development")
-  config.Server.ExternalURL = getEnv("EXTERNAL_URL", "http://localhost:8080")
+	config.Server.ExternalURL = getEnv("EXTERNAL_URL", "http://localhost:8080")
 
 	// Database config
 	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "DEVICE_TABLE_NAME")
 	config.Database.DataTableName = getEnv("DATA_TABLE_NAME", "machine_data_table")
 	config.Database.UserTableName = getEnv("USER_TABLE_NAME", "USER_TABLE_NAME")
+	config.Database.PostgresHost = getEnv("POSTGRES_HOST", "localhost")
+	config.Database.PostgresPort = getEnv("POSTGRES_PORT", "5432")
+	config.Database.PostgresUser = getEnv("POSTGRES_USER", "postgres")
+	config.Database.PostgresPassword = getEnv("POSTGRES_PASSWORD", "postgres")
+	config.Database.PostgresDBName = getEnv("POSTGRES_DB_NAME", "postgres")
+	config.Database.PostgresSSLMode = getEnv("POSTGRES_SSL_MODE", "disable")
 
 	// AWS config
 	config.AWS.Region = getEnv("AWS_REGION", "us-east-1")
@@ -102,12 +114,18 @@ func LoadConfigWithPath(envPaths ...string) (*Config, error) {
 	}
 	config.Server.Port = port
 	config.Server.Environment = getEnv("ENVIRONMENT", "development")
-  config.Server.ExternalURL = getEnv("EXTERNAL_URL", "http://localhost:8080")
+	config.Server.ExternalURL = getEnv("EXTERNAL_URL", "http://localhost:8080")
 
 	// Database config
 	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "machine_table")
 	config.Database.DataTableName = getEnv("DATA_TABLE_NAME", "machine_data_table")
 	config.Database.UserTableName = getEnv("USER_TABLE_NAME", "user_table")
+	config.Database.PostgresHost = getEnv("POSTGRES_HOST", "localhost")
+	config.Database.PostgresPort = getEnv("POSTGRES_PORT", "5432")
+	config.Database.PostgresUser = getEnv("POSTGRES_USER", "postgres")
+	config.Database.PostgresPassword = getEnv("POSTGRES_PASSWORD", "postgres")
+	config.Database.PostgresDBName = getEnv("POSTGRES_DB_NAME", "postgres")
+	config.Database.PostgresSSLMode = getEnv("POSTGRES_SSL_MODE", "disable")
 
 	// AWS config
 	config.AWS.Region = getEnv("AWS_REGION", "us-east-1")
