@@ -66,15 +66,23 @@ func main() {
 
 	policyRepo := repositories.NewPolicyRepository(awsClients.GetIoTClient())
 
+	// Initialize category repository
+	categoryRepo := repositories.NewCategoryRepository(database.GetDynamoClient())
+	// Use default table name "categoryTable" as defined in the repository
+
 	// Initialize services
 	deviceService := services.NewDeviceService(deviceRepo)
 	policyService := services.NewPolicyService(policyRepo, cfg.AWS.IoTPolicy)
+	categoryService := services.NewCategoryService(categoryRepo)
 
 	// Initialize handlers
 	addDeviceHandler := handlers.NewAddDeviceHandler(deviceService)
 	attachIotPolicyHandler := handlers.NewAttachIotPolicyHandler(policyService)
 	getDeviceSensorDataHandler := handlers.NewGetDeviceSensorDataHandler(deviceService)
 	listUserDevicesHandler := handlers.NewListUserDevicesHandler(deviceService)
+	addCategoryHandler := handlers.NewAddCategoryHandler(categoryService)
+	getCategoriesByTypeHandler := handlers.NewGetCategoriesByTypeHandler(categoryService)
+  listAllCategoriesHandler := handlers.NewListAllCategoriesHandler(categoryService)
 
 	// Create router with global middleware
 	r := gin.New()
@@ -139,6 +147,9 @@ func main() {
 	// Public routes (no authentication required)
 	r.POST("/device/attach-policy", attachIotPolicyHandler.HandleGin)
 	r.POST("/device/sensor-data", getDeviceSensorDataHandler.HandleGin)
+	r.POST("/category/add", addCategoryHandler.HandleGin)
+	r.GET("/category/type/:type", getCategoriesByTypeHandler.HandleGin)
+  r.GET("/category/all", listAllCategoriesHandler.HandleGin)
 
 	// Create server
 	port := cfg.Server.Port

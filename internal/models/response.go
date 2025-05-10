@@ -16,3 +16,9 @@ type SensorData struct {
 type GetDeviceSensorDataResponse struct {
 	Data []SensorData `json:"data" dynamodbav:"data"`
 }
+
+type CategoryResponse struct {
+	Name string `json:"name" dynamodbav:"name"`
+	Type string `json:"type" dynamodbav:"type"`
+}
+
