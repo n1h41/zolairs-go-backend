@@ -61,9 +61,9 @@ func (s *DeviceService) calculateTimeRange(baseTimeMs int64, dateMode string) (i
 	case "monthly":
 		// Look back approximately 30 days from the provided timestamp
 		startTime = endTime.AddDate(0, -1, 0)
-  case "yearly":
-    // Look back 1 year from the provided timestamp
-    startTime = endTime.AddDate(-1, 0, 0)
+	case "yearly":
+		// Look back 1 year from the provided timestamp
+		startTime = endTime.AddDate(-1, 0, 0)
 	default:
 		// Default to daily if unrecognized mode
 		startTime = endTime.Add(-24 * time.Hour)
@@ -72,4 +72,3 @@ func (s *DeviceService) calculateTimeRange(baseTimeMs int64, dateMode string) (i
 	// Return timestamps in milliseconds
 	return startTime.UnixMilli(), endTime.UnixMilli()
 }
-

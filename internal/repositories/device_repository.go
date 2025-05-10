@@ -81,24 +81,28 @@ func (r *DeviceRepository) GetDevicesByUserID(ctx context.Context, userID string
 
 // GetSensorData retrieves sensor data for a specific device within a time range
 func (r *DeviceRepository) GetSensorData(ctx context.Context, macID string, startTime, endTime int64) ([]models.SensorData, error) {
-	// Create PartiQL statement
-	statement := fmt.Sprintf(`SELECT * FROM "%s" WHERE "mac_id" = '%s' AND "timestamp" >= %d AND "timestamp" <= %d`,
-		r.machineTable, macID, startTime, endTime)
+	log.Printf("Table name: %s", r.machineTable)
 
-	log.Printf("Executing PartiQL statement: %s", statement)
-
-	// Execute the PartiQL query
-	input := &dynamodb.ExecuteStatementInput{
-		Statement: aws.String(statement),
+	input := &dynamodb.QueryInput{
+		TableName:              aws.String(r.machineTable),
+		KeyConditionExpression: aws.String("mac_id = :macId AND #ts BETWEEN :startTime AND :endTime"),
+		ExpressionAttributeNames: map[string]string{
+			"#ts": "timestamp",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":macId":     &types.AttributeValueMemberS{Value: macID},
+			":startTime": &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", startTime)},
+			":endTime":   &types.AttributeValueMemberN{Value: fmt.Sprintf("%d", endTime)},
+		},
 	}
 
-	// Execute the PartiQL statement
-	result, err := r.db.ExecuteStatement(ctx, input)
+	log.Printf("Querying sensor data for device %s from %d to %d", macID, startTime, endTime)
+
+	result, err := r.db.Query(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	// Unmarshal the results
 	var sensorData []models.SensorData
 	err = attributevalue.UnmarshalListOfMaps(result.Items, &sensorData)
 	if err != nil {
