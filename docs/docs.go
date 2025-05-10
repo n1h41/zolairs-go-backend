@@ -293,6 +293,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/check-parent-id": {
+            "get": {
+                "description": "Checks if the authenticated user has a parent ID set in their profile",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Check if user has parent ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "X-User-ID",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns has_parent_id flag",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Error when user ID is not found in context",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error when checking parent ID fails",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/user/devices": {
             "get": {
                 "security": [

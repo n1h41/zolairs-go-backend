@@ -297,6 +297,37 @@ paths:
       summary: Get device sensor data
       tags:
       - Device Data
+  /user/check-parent-id:
+    get:
+      description: Checks if the authenticated user has a parent ID set in their profile
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns has_parent_id flag
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Error when user ID is not found in context
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Error when checking parent ID fails
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Check if user has parent ID
   /user/devices:
     get:
       consumes:

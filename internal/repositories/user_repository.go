@@ -29,18 +29,30 @@ func (r *UserRepository) WithTables(userTable, entityTable string) *UserReposito
 }
 
 func (r *UserRepository) HasParentID(ctx context.Context, userID string) (bool, error) {
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(r.userTable),
-		Key: map[string]types.AttributeValue{
-			"idType": &types.AttributeValueMemberS{Value: userID},
+	input := &dynamodb.QueryInput{
+		TableName:              aws.String(r.entityTable),
+		IndexName:              aws.String("idType-index"),
+		KeyConditionExpression: aws.String("idType = :idType"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":idType": &types.AttributeValueMemberS{Value: userID},
 		},
 	}
 
-	result, err := r.db.GetItem(ctx, input)
+	result, err := r.db.Query(ctx, input)
 	if err != nil {
 		return false, err
 	}
 
-	_, exists := result.Item["parentId"]
-	return exists, nil
+	if len(result.Items) == 0 {
+		return false, nil
+	}
+
+	for _, item := range result.Items {
+		_, exists := item["parentId"]
+		if exists {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
