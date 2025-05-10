@@ -69,5 +69,8 @@ jobs:
             
             # Check container status
             docker ps
+
+            # Remove old images
+            docker image prune -f
           EOF
 

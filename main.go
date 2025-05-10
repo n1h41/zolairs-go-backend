@@ -61,19 +61,19 @@ func main() {
 
 	// Initialize repositories
 	deviceRepo := repositories.NewDeviceRepository(database.GetDynamoClient())
-	// Set the table names from configuration
+	policyRepo := repositories.NewPolicyRepository(awsClients.GetIoTClient())
+	categoryRepo := repositories.NewCategoryRepository(database.GetDynamoClient())
+	userRepo := repositories.NewUserRepository(database.GetDynamoClient())
+
 	deviceRepo.WithTables(database.GetDeviceTableName(), database.GetMachineDataTableName())
 
-	policyRepo := repositories.NewPolicyRepository(awsClients.GetIoTClient())
-
-	// Initialize category repository
-	categoryRepo := repositories.NewCategoryRepository(database.GetDynamoClient())
 	// Use default table name "categoryTable" as defined in the repository
 
 	// Initialize services
 	deviceService := services.NewDeviceService(deviceRepo)
 	policyService := services.NewPolicyService(policyRepo, cfg.AWS.IoTPolicy)
 	categoryService := services.NewCategoryService(categoryRepo)
+	userService := services.NewUserService(userRepo)
 
 	// Initialize handlers
 	addDeviceHandler := handlers.NewAddDeviceHandler(deviceService)
@@ -82,7 +82,8 @@ func main() {
 	listUserDevicesHandler := handlers.NewListUserDevicesHandler(deviceService)
 	addCategoryHandler := handlers.NewAddCategoryHandler(categoryService)
 	getCategoriesByTypeHandler := handlers.NewGetCategoriesByTypeHandler(categoryService)
-  listAllCategoriesHandler := handlers.NewListAllCategoriesHandler(categoryService)
+	listAllCategoriesHandler := handlers.NewListAllCategoriesHandler(categoryService)
+	checkParentIDHandler := handlers.NewCheckHasParentIDHandler(userService)
 
 	// Create router with global middleware
 	r := gin.New()
@@ -142,6 +143,7 @@ func main() {
 	{
 		private.POST("/device/add", addDeviceHandler.HandleGin)
 		private.GET("/user/devices", listUserDevicesHandler.HandleGin)
+		private.GET("/user/check-parent-id", checkParentIDHandler.HandleGin)
 	}
 
 	// Public routes (no authentication required)
@@ -149,7 +151,7 @@ func main() {
 	r.POST("/device/sensor-data", getDeviceSensorDataHandler.HandleGin)
 	r.POST("/category/add", addCategoryHandler.HandleGin)
 	r.GET("/category/type/:type", getCategoriesByTypeHandler.HandleGin)
-  r.GET("/category/all", listAllCategoriesHandler.HandleGin)
+	r.GET("/category/all", listAllCategoriesHandler.HandleGin)
 
 	// Create server
 	port := cfg.Server.Port
