@@ -54,7 +54,7 @@ func main() {
 
 	// Initialize database clients
 	log.Println("Initializing database clients...")
-	database, err := db.NewDatabase(awsClients.DynamoDB, cfg)
+	database, err := db.NewDatabase(context.Background(), awsClients.DynamoDB, cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize database clients: %v", err)
 	}
@@ -82,6 +82,8 @@ func main() {
 	getCategoriesByTypeHandler := handlers.NewGetCategoriesByTypeHandler(categoryService)
 	listAllCategoriesHandler := handlers.NewListAllCategoriesHandler(categoryService)
 	checkParentIDHandler := handlers.NewCheckHasParentIDHandler(userService)
+	updateUserDetailsHandler := handlers.NewUpdateUserDetailsHandler(userService)
+	getUserDetailsHandler := handlers.NewGetUserDetailsHandler(userService)
 
 	// Create router with global middleware
 	r := gin.New()
@@ -142,6 +144,10 @@ func main() {
 		private.POST("/device/add", addDeviceHandler.HandleGin)
 		private.GET("/user/devices", listUserDevicesHandler.HandleGin)
 		private.GET("/user/check-parent-id", checkParentIDHandler.HandleGin)
+
+		// User details endpoints
+		private.POST("/user/details", updateUserDetailsHandler.HandleGin)
+		private.GET("/user/details", getUserDetailsHandler.HandleGin)
 	}
 
 	// Public routes (no authentication required)
