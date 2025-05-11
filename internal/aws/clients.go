@@ -3,7 +3,6 @@ package aws
 import (
 	"context"
 	"fmt"
-	"log"
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -16,8 +15,6 @@ type Clients struct {
 }
 
 func InitAWSClients(ctx context.Context) (*Clients, error) {
-	log.Printf("Initializing AWS clients")
-
 	awsCfg, err := awsconfig.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)

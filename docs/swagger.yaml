@@ -113,6 +113,62 @@ definitions:
       timestamp:
         type: integer
     type: object
+  models.UserDetails:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      phone:
+        type: string
+      region:
+        type: string
+      street1:
+        type: string
+      street2:
+        type: string
+      zip:
+        type: string
+    type: object
+  models.UserDetailsRequest:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      phone:
+        type: string
+      region:
+        type: string
+      street1:
+        type: string
+      street2:
+        type: string
+      zip:
+        type: string
+    required:
+    - city
+    - country
+    - email
+    - firstName
+    - lastName
+    - phone
+    - region
+    - street1
+    - zip
+    type: object
 info:
   contact: {}
 paths:
@@ -328,6 +384,79 @@ paths:
               type: string
             type: object
       summary: Check if user has parent ID
+  /user/details:
+    get:
+      description: Retrieves the user details for the authenticated user
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: No user details found (null response)
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Error when user is not authenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Error when retrieving user details fails
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get user details
+    post:
+      consumes:
+      - application/json
+      description: Updates or adds user details for the authenticated user
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: User details information
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserDetailsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User details updated successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Error when request validation fails
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Error when user is not authenticated
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Error when updating user details fails
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update user details
   /user/devices:
     get:
       consumes:

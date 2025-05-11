@@ -1,5 +1,19 @@
 package models
 
+// UserDetailsRequest represents a request to update user details
+type UserDetailsRequest struct {
+	City      string `json:"city" validate:"required"`
+	Country   string `json:"country" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
+	FirstName string `json:"firstName" validate:"required"`
+	LastName  string `json:"lastName" validate:"required"`
+	Phone     string `json:"phone" validate:"required"`
+	Region    string `json:"region" validate:"required"`
+	Street1   string `json:"street1" validate:"required"`
+	Street2   string `json:"street2"`
+	Zip       string `json:"zip" validate:"required"`
+}
+
 // AttachIotPolicyRequest represents a request to attach an IoT policy
 type AttachIotPolicyRequest struct {
 	IdentityId string `json:"identityId" validate:"required"`
@@ -23,5 +37,6 @@ type AddCategoryRequest struct {
 	Name string `json:"name" validate:"required,min=2,max=50"`
 	Type string `json:"type" validate:"required,min=2,max=50"`
 }
+
 
 
