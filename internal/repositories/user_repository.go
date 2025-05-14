@@ -66,9 +66,9 @@ func (r *UserRepository) UpdateUserDetails(ctx context.Context, userID string, d
 	checkInput := &dynamodb.GetItemInput{
 		TableName: aws.String(r.userTable),
 		Key: map[string]types.AttributeValue{
-			"user_id": &types.AttributeValueMemberS{Value: userID},
+			"userId": &types.AttributeValueMemberS{Value: userID},
 		},
-		ProjectionExpression: aws.String("user_id"),
+		ProjectionExpression: aws.String("userId"),
 	}
 
 	checkResult, err := r.db.GetItem(ctx, checkInput)
@@ -106,7 +106,7 @@ func (r *UserRepository) UpdateUserDetails(ctx context.Context, userID string, d
 	input := &dynamodb.UpdateItemInput{
 		TableName: aws.String(r.userTable),
 		Key: map[string]types.AttributeValue{
-			"user_id": &types.AttributeValueMemberS{Value: userID},
+			"userId": &types.AttributeValueMemberS{Value: userID},
 		},
 		UpdateExpression:          aws.String("SET userDetails = :ud"),
 		ExpressionAttributeValues: expressionAttrValues,
@@ -123,7 +123,7 @@ func (r *UserRepository) GetUserDetails(ctx context.Context, userID string) (*mo
 	input := &dynamodb.GetItemInput{
 		TableName: aws.String(r.userTable),
 		Key: map[string]types.AttributeValue{
-			"user_id": &types.AttributeValueMemberS{Value: userID},
+			"userId": &types.AttributeValueMemberS{Value: userID},
 		},
 		ProjectionExpression: aws.String("userDetails"),
 	}
