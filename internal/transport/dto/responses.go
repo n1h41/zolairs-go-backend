@@ -58,10 +58,10 @@ type DeviceResponse struct {
 
 // SensorDataResponse represents sensor readings in API responses
 type SensorDataResponse struct {
-	Timestamp   int64   `json:"timestamp"`
-	Amperage    float64 `json:"amperage"`
-	Temperature float64 `json:"temperature"`
-	Humidity    float64 `json:"humidity"`
+	Timestamp   int64  `json:"timestamp"`
+	Amperage    string `json:"amperage"`
+	Temperature string `json:"temperature"`
+	Humidity    string `json:"humidity"`
 }
 
 // CategoryResponse represents category data in API responses

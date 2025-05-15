@@ -44,9 +44,9 @@ type Device struct {
 type SensorReading struct {
 	DeviceID    string    `json:"deviceId" db:"mac_id"`
 	Timestamp   time.Time `json:"timestamp" db:"timestamp"`
-	Amperage    float64   `json:"amperage" db:"amperage"`
-	Temperature float64   `json:"temperature" db:"temperature"`
-	Humidity    float64   `json:"humidity" db:"humidity"`
+	Amperage    string    `json:"amperage" db:"amperage"`
+	Temperature string    `json:"temperature" db:"temperature"`
+	Humidity    string    `json:"humidity" db:"humidity"`
 	RawData     string    `json:"-" db:"raw_data"`
 }
 
