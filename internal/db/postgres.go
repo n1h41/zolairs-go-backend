@@ -13,12 +13,11 @@ import (
 // PostgresDB represents a PostgreSQL database connection
 type PostgresDB struct {
 	pool *pgxpool.Pool
-	cfg  *config.Config
 }
 
 // NewPostgresDB creates a new PostgreSQL database connection
 func NewPostgresDB(ctx context.Context, cfg *config.Config) (*PostgresDB, error) {
-	// Create connection string
+	// Build the connection string
 	connString := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		cfg.Database.PostgresHost,
@@ -30,39 +29,40 @@ func NewPostgresDB(ctx context.Context, cfg *config.Config) (*PostgresDB, error)
 	)
 
 	// Configure connection pool
-	poolConfig, err := pgxpool.ParseConfig(connString)
+	pgConfig, err := pgxpool.ParseConfig(connString)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse pool config: %w", err)
+		return nil, fmt.Errorf("failed to parse postgres config: %w", err)
 	}
 
-	// Set pool options
-	poolConfig.MaxConns = 10
-	poolConfig.MaxConnLifetime = time.Hour
-	poolConfig.MaxConnIdleTime = 30 * time.Minute
+	// Set connection pool options
+	pgConfig.MaxConns = 10
+	pgConfig.MinConns = 2
+	pgConfig.MaxConnLifetime = 30 * time.Minute
+	pgConfig.MaxConnIdleTime = 5 * time.Minute
+	pgConfig.HealthCheckPeriod = 1 * time.Minute
 
-	// Create connection pool
-	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
+	// Create the connection pool
+	pool, err := pgxpool.NewWithConfig(ctx, pgConfig)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create connection pool: %w", err)
+		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
 
-	// Test connection
+	// Test the connection
 	if err := pool.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+		return nil, fmt.Errorf("failed to ping postgres: %w", err)
 	}
 
 	return &PostgresDB{
 		pool: pool,
-		cfg:  cfg,
 	}, nil
 }
 
-// GetPool returns the connection pool
+// GetPool returns the underlying pgxpool.Pool
 func (db *PostgresDB) GetPool() *pgxpool.Pool {
 	return db.pool
 }
 
-// Close closes the database connection pool
+// Close closes the database connection
 func (db *PostgresDB) Close() {
 	if db.pool != nil {
 		db.pool.Close()

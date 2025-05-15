@@ -2,82 +2,84 @@ package handlers
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"n1h41/zolaris-backend-app/internal/middleware"
-	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
-	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
+	"n1h41/zolaris-backend-app/internal/transport/dto"
+	"n1h41/zolaris-backend-app/internal/transport/mappers"
+	"n1h41/zolaris-backend-app/internal/transport/response"
 	"n1h41/zolaris-backend-app/internal/utils"
 )
 
-// UpdateUserDetailsHandler represents a handler for updating user details
+// UpdateUserDetailsHandler handles requests to update user details
 type UpdateUserDetailsHandler struct {
-	UserService *services.UserService
+	userService *services.UserService
 }
 
-// NewUpdateUserDetailsHandler creates a new update user details handler
+// NewUpdateUserDetailsHandler creates a new UpdateUserDetailsHandler
 func NewUpdateUserDetailsHandler(userService *services.UserService) *UpdateUserDetailsHandler {
-	return &UpdateUserDetailsHandler{UserService: userService}
+	return &UpdateUserDetailsHandler{userService: userService}
 }
 
-// UpdateUserDetailsHandler godoc
+// HandleGin handles POST /user/details requests
 // @Summary Update user details
-// @Description Updates or adds user details for the authenticated user
+// @Description Update the authenticated user's profile information
+// @Tags User Management
 // @Accept json
 // @Produce json
 // @Param X-User-ID header string true "User ID"
-// @Param request body models.UserDetailsRequest true "User details information"
-// @Success 200 {object} map[string]interface{} "User details updated successfully"
-// @Failure 400 {object} map[string]string "Error when request validation fails"
-// @Failure 401 {object} map[string]string "Error when user is not authenticated"
-// @Failure 500 {object} map[string]string "Error when updating user details fails"
+// @Param user body dto.UserDetailsRequest true "User details"
+// @Success 200 {object} dto.Response{data=dto.UserResponse} "User details updated successfully"
+// @Failure 400 {object} dto.ErrorResponse "Validation error"
+// @Failure 401 {object} dto.ErrorResponse "User not authenticated"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Security ApiKeyAuth
 // @Router /user/details [post]
 func (h *UpdateUserDetailsHandler) HandleGin(c *gin.Context) {
-	// Extract user ID from the context (set by auth middleware)
+	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserIDFromGin(c)
 	if userID == "" {
-		transport_gin.SendError(c, http.StatusUnauthorized, "User not authenticated")
+		response.Unauthorized(c, "User not authenticated")
 		return
 	}
 
-	var req models.UserDetailsRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		transport_gin.SendError(c, http.StatusBadRequest, "Invalid request body")
+	// Parse request body
+	var request dto.UserDetailsRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Printf("Error decoding request: %v", err)
+		response.BadRequest(c, "Invalid request format")
 		return
 	}
 
-	// Validate the request
-	validationErrs := utils.Validate(req)
+	// Validate request
+	validationErrs := utils.Validate(request)
 	if validationErrs != nil {
 		log.Printf("Validation errors: %s", utils.ValidationErrorsToString(validationErrs))
-		transport_gin.SendBadRequestError(c, utils.CreateValidationError(validationErrs))
+
+		// Convert validation errors to DTO format
+		var validationErrDTOs []dto.ValidationError
+		for _, item := range validationErrs {
+			validationErrDTOs = append(validationErrDTOs, dto.ValidationError{
+				Field:   item.Field,
+				Message: item.Error,
+			})
+		}
+
+		response.ValidationErrors(c, validationErrDTOs)
 		return
 	}
 
-	// Map request to user details model
-	userDetails := models.UserDetails{
-		City:      req.City,
-		Country:   req.Country,
-		Email:     req.Email,
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		Phone:     req.Phone,
-		Region:    req.Region,
-		Street1:   req.Street1,
-		Street2:   req.Street2,
-		Zip:       req.Zip,
-	}
-
-	// Update the user details
-	err := h.UserService.UpdateUserDetails(c.Request.Context(), userID, &userDetails)
+	// Update user details
+	updatedUser, err := h.userService.UpdateUserDetails(c.Request.Context(), userID, &request)
 	if err != nil {
 		log.Printf("Error updating user details: %v", err)
-		transport_gin.SendError(c, http.StatusInternalServerError, "Failed to update user details")
+		response.InternalError(c, "Failed to update user details")
 		return
 	}
 
-	transport_gin.SendResponse(c, http.StatusOK, "User details updated successfully")
+	// Convert domain model to response DTO
+	userResponse := mappers.UserToResponse(updatedUser)
+	response.OK(c, userResponse, "User details updated successfully")
 }

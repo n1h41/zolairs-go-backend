@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"log"
-	"n1h41/zolaris-backend-app/internal/services"
-	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
 
 	"github.com/gin-gonic/gin"
+
+	"n1h41/zolaris-backend-app/internal/services"
+	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
 )
 
 type CheckHasParentIDHandler struct {
@@ -34,7 +35,7 @@ func (h *CheckHasParentIDHandler) HandleGin(c *gin.Context) {
 	}
 
 	// Check if the user has a parent ID
-	hasParentID, err := h.UserService.HasParentID(c.Request.Context(), userID.(string))
+	hasParentID, err := h.UserService.CheckHasParentID(c.Request.Context(), userID.(string))
 	if err != nil {
 		log.Printf("Error checking parent ID: %v", err)
 		transport_gin.SendError(c, 500, "Failed to check parent ID")
