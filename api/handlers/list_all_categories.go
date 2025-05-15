@@ -2,12 +2,11 @@ package handlers
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
+	"n1h41/zolaris-backend-app/internal/transport/dto"
 	"n1h41/zolaris-backend-app/internal/transport/response"
 )
 
@@ -24,7 +23,7 @@ func NewListAllCategoriesHandler(categoryService *services.CategoryService) *Lis
 // @Description Retrieve all categories
 // @Tags Category Management
 // @Produce json
-// @Success 200 {array} models.CategoryResponse "List of categories"
+// @Success 200 {array} dto.CategoryResponse "List of categories"
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Router /category/all [get]
 func (h *ListAllCategoriesHandler) HandleGin(c *gin.Context) {
@@ -38,8 +37,8 @@ func (h *ListAllCategoriesHandler) HandleGin(c *gin.Context) {
 
 	// Return empty array if no categories found
 	if categories == nil {
-		categories = []models.CategoryResponse{}
+		categories = []*dto.CategoryResponse{}
 	}
 
-	c.JSON(http.StatusOK, categories)
+	response.OK(c, categories, "Categories retrieved successfully")
 }

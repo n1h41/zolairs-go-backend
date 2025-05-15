@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"n1h41/zolaris-backend-app/internal/middleware"
-	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
+	"n1h41/zolaris-backend-app/internal/transport/dto"
 	"n1h41/zolaris-backend-app/internal/transport/response"
 	"n1h41/zolaris-backend-app/internal/utils"
 )
@@ -29,7 +29,7 @@ func NewAddDeviceHandler(deviceService *services.DeviceService) *AddDeviceHandle
 // @Accept json
 // @Produce json
 // @Param X-User-ID header string true "User ID"
-// @Param device body models.AddDeviceRequest true "Device information"
+// @Param device body dto.DeviceRequest true "Device information"
 // @Success 201 {object} dto.Response "Device added successfully"
 // @Failure 400 {object} dto.ErrorResponse "Validation error"
 // @Failure 401 {object} dto.ErrorResponse "User not authenticated"
@@ -38,7 +38,7 @@ func NewAddDeviceHandler(deviceService *services.DeviceService) *AddDeviceHandle
 // @Router /device/add [post]
 func (h *AddDeviceHandler) HandleGin(c *gin.Context) {
 	// Parse request body
-	var request models.AddDeviceRequest
+	var request dto.DeviceRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Printf("Error decoding request: %v", err)
 		response.BadRequest(c, "Invalid request format")

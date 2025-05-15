@@ -2,13 +2,21 @@ package repositories
 
 import (
 	"context"
-	"n1h41/zolaris-backend-app/internal/models"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+
+	"n1h41/zolaris-backend-app/internal/domain"
 )
+
+// CategoryDBModel represents how the category is stored in the database
+type CategoryDBModel struct {
+	ID   string `dynamodbav:"id"`
+	Name string `dynamodbav:"name"`
+	Type string `dynamodbav:"type"`
+}
 
 // CategoryRepository handles all category-related database operations
 type CategoryRepository struct {
@@ -47,7 +55,7 @@ func (r *CategoryRepository) AddCategory(ctx context.Context, name, categoryType
 }
 
 // GetCategoryByName retrieves a category by its name
-func (r *CategoryRepository) GetCategoryByName(ctx context.Context, name string) (*models.CategoryResponse, error) {
+func (r *CategoryRepository) GetCategoryByName(ctx context.Context, name string) (*domain.Category, error) {
 	input := &dynamodb.GetItemInput{
 		TableName: aws.String(r.categoryTable),
 		Key: map[string]types.AttributeValue{
@@ -67,17 +75,24 @@ func (r *CategoryRepository) GetCategoryByName(ctx context.Context, name string)
 	}
 
 	// Unmarshal the results
-	var category models.CategoryResponse
-	err = attributevalue.UnmarshalMap(result.Item, &category)
+	var dbCategory CategoryDBModel
+	err = attributevalue.UnmarshalMap(result.Item, &dbCategory)
 	if err != nil {
 		return nil, err
 	}
 
-	return &category, nil
+	// Convert to domain model
+	domainCategory := &domain.Category{
+		ID:   dbCategory.ID,
+		Name: dbCategory.Name,
+		Type: dbCategory.Type,
+	}
+
+	return domainCategory, nil
 }
 
 // GetCategoriesByType retrieves all categories of a specific type
-func (r *CategoryRepository) GetCategoriesByType(ctx context.Context, categoryType string) ([]models.CategoryResponse, error) {
+func (r *CategoryRepository) GetCategoriesByType(ctx context.Context, categoryType string) ([]*domain.Category, error) {
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(r.categoryTable),
 		IndexName:              aws.String("TypeIndex"),
@@ -97,17 +112,27 @@ func (r *CategoryRepository) GetCategoriesByType(ctx context.Context, categoryTy
 	}
 
 	// Unmarshal the results
-	var categories []models.CategoryResponse
-	err = attributevalue.UnmarshalListOfMaps(result.Items, &categories)
+	var dbCategories []CategoryDBModel
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &dbCategories)
 	if err != nil {
 		return nil, err
 	}
 
-	return categories, nil
+	// Convert to domain model
+	domainCategories := make([]*domain.Category, len(dbCategories))
+	for i, cat := range dbCategories {
+		domainCategories[i] = &domain.Category{
+			ID:   cat.ID,
+			Name: cat.Name,
+			Type: cat.Type,
+		}
+	}
+
+	return domainCategories, nil
 }
 
 // ListAllCategories retrieves all categories from the database
-func (r *CategoryRepository) ListAllCategories(ctx context.Context) ([]models.CategoryResponse, error) {
+func (r *CategoryRepository) ListAllCategories(ctx context.Context) ([]*domain.Category, error) {
 	// Create scan input
 	input := &dynamodb.ScanInput{
 		TableName: aws.String(r.categoryTable),
@@ -120,11 +145,21 @@ func (r *CategoryRepository) ListAllCategories(ctx context.Context) ([]models.Ca
 	}
 
 	// Unmarshal the results
-	var categories []models.CategoryResponse
-	err = attributevalue.UnmarshalListOfMaps(result.Items, &categories)
+	var dbCategories []CategoryDBModel
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &dbCategories)
 	if err != nil {
 		return nil, err
 	}
 
-	return categories, nil
+	// Convert to domain model
+	domainCategories := make([]*domain.Category, len(dbCategories))
+	for i, cat := range dbCategories {
+		domainCategories[i] = &domain.Category{
+			ID:   cat.ID,
+			Name: cat.Name,
+			Type: cat.Type,
+		}
+	}
+
+	return domainCategories, nil
 }

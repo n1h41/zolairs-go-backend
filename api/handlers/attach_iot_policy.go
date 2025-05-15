@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
+	"n1h41/zolaris-backend-app/internal/transport/dto"
 	"n1h41/zolaris-backend-app/internal/transport/response"
 	"n1h41/zolaris-backend-app/internal/utils"
 )
@@ -27,14 +27,14 @@ func NewAttachIotPolicyHandler(policyService *services.PolicyService) *AttachIot
 // @Tags Policy Management
 // @Accept json
 // @Produce json
-// @Param request body models.AttachIotPolicyRequest true "Identity information"
+// @Param request body dto.PolicyAttachRequest true "Identity information"
 // @Success 200 {object} dto.Response "IoT policy attached successfully"
 // @Failure 400 {object} dto.ErrorResponse "Invalid request or validation error"
 // @Failure 500 {object} dto.ErrorResponse "Failed to attach IoT policy"
 // @Router /device/attach-policy [post]
 func (h *AttachIotPolicyHandler) HandleGin(c *gin.Context) {
 	// Parse request body
-	var request models.AttachIotPolicyRequest
+	var request dto.PolicyAttachRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Printf("Error decoding request: %v", err)
 		response.BadRequest(c, "Invalid request format")
@@ -50,7 +50,7 @@ func (h *AttachIotPolicyHandler) HandleGin(c *gin.Context) {
 	}
 
 	// Call service to attach policy
-	if err := h.policyService.AttachIoTPolicy(c.Request.Context(), request.IdentityId); err != nil {
+	if err := h.policyService.AttachIoTPolicy(c.Request.Context(), request.IdentityID); err != nil {
 		log.Printf("Error attaching IoT policy: %v", err)
 		response.InternalError(c, "Failed to attach IoT policy")
 		return

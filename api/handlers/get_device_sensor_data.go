@@ -2,12 +2,11 @@ package handlers
 
 import (
 	"log"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
-	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
+	"n1h41/zolaris-backend-app/internal/transport/dto"
 	"n1h41/zolaris-backend-app/internal/transport/response"
 	"n1h41/zolaris-backend-app/internal/utils"
 )
@@ -28,14 +27,14 @@ func NewGetDeviceSensorDataHandler(deviceService *services.DeviceService) *GetDe
 // @Tags Device Data
 // @Accept json
 // @Produce json
-// @Param request body models.GetDeviceSensorDataRequest true "Request parameters"
-// @Success 200 {object} models.GetDeviceSensorDataResponse "Sensor data for the device"
+// @Param request body dto.SensorDataRequest true "Request parameters"
+// @Success 200 {object} dto.Response{data=[]dto.SensorDataResponse} "Sensor data for the device"
 // @Failure 400 {object} dto.ErrorResponse "Invalid request or validation error"
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Router /device/sensor-data [post]
 func (h *GetDeviceSensorDataHandler) HandleGin(c *gin.Context) {
 	// Parse request body
-	var request models.GetDeviceSensorDataRequest
+	var request dto.SensorDataRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Printf("Error decoding request: %v", err)
 		response.BadRequest(c, "Invalid request format")
@@ -50,26 +49,17 @@ func (h *GetDeviceSensorDataHandler) HandleGin(c *gin.Context) {
 		return
 	}
 
-	// Parse the timestamp
-	baseTimestamp, err := strconv.ParseInt(request.Timestamp, 10, 64)
-	if err != nil {
-		log.Printf("Error parsing timestamp: %v", err)
-		response.BadRequest(c, "Invalid timestamp format")
-		return
-	}
+	// Use timestamp directly from request
+	baseTimestamp := request.Timestamp
 
 	// Call service to get sensor data
-	data, err := h.deviceService.GetDeviceSensorData(c.Request.Context(), request.DeviceMacId, request.DateMode, baseTimestamp)
+	data, err := h.deviceService.GetDeviceSensorData(c.Request.Context(), request.DeviceMacID, request.DateMode, baseTimestamp)
 	if err != nil {
 		log.Printf("Error getting sensor data: %v", err)
 		response.InternalError(c, "Failed to retrieve sensor data")
 		return
 	}
 
-	// Create response
-	result := models.GetDeviceSensorDataResponse{
-		Data: data,
-	}
-
-	response.OK(c, result, "Data retrieved successfully")
+	// Use the data directly in the response
+	response.OK(c, data, "Data retrieved successfully")
 }

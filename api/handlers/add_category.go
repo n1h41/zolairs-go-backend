@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
+	"n1h41/zolaris-backend-app/internal/transport/dto"
 	"n1h41/zolaris-backend-app/internal/transport/response"
 	"n1h41/zolaris-backend-app/internal/utils"
 )
@@ -28,7 +28,7 @@ func NewAddCategoryHandler(categoryService *services.CategoryService) *AddCatego
 // @Tags Category Management
 // @Accept json
 // @Produce json
-// @Param category body models.AddCategoryRequest true "Category information"
+// @Param category body dto.CategoryRequest true "Category information"
 // @Success 201 {object} dto.Response "Category added successfully"
 // @Failure 400 {object} dto.ErrorResponse "Validation error"
 // @Failure 409 {object} dto.ErrorResponse "Category already exists"
@@ -36,7 +36,7 @@ func NewAddCategoryHandler(categoryService *services.CategoryService) *AddCatego
 // @Router /category/add [post]
 func (h *AddCategoryHandler) HandleGin(c *gin.Context) {
 	// Parse request body
-	var request models.AddCategoryRequest
+	var request dto.CategoryRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Printf("Error decoding request: %v", err)
 		response.BadRequest(c, "Invalid request format")
