@@ -58,3 +58,4 @@ func (h *AttachIotPolicyHandler) HandleGin(c *gin.Context) {
 
 	response.OK(c, nil, "IoT policy attached successfully")
 }
+
