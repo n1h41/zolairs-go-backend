@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+
 	"n1h41/zolaris-backend-app/internal/domain"
 )
 
@@ -11,6 +12,8 @@ type UserRepositoryInterface interface {
 	CreateUser(ctx context.Context, user *domain.User) error
 	UpdateUser(ctx context.Context, user *domain.User) error
 	CheckHasParentID(ctx context.Context, userID string) (bool, error)
+	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
+	GetChildUsers(ctx context.Context, parentID string) ([]*domain.User, error)
 }
 
 // DeviceRepositoryInterface defines the operations for device data
@@ -31,4 +34,3 @@ type CategoryRepositoryInterface interface {
 type PolicyRepositoryInterface interface {
 	AttachPolicy(ctx context.Context, identityId, policyName string) error
 }
-

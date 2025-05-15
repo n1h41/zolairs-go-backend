@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"n1h41/zolaris-backend-app/internal/middleware"
 	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
-	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
+	"n1h41/zolaris-backend-app/internal/transport/response"
 	"n1h41/zolaris-backend-app/internal/utils"
 )
 
@@ -30,10 +30,10 @@ func NewAddDeviceHandler(deviceService *services.DeviceService) *AddDeviceHandle
 // @Produce json
 // @Param X-User-ID header string true "User ID"
 // @Param device body models.AddDeviceRequest true "Device information"
-// @Success 201 {object} transport_gin.Response "Device added successfully"
-// @Failure 400 {object} transport_gin.ErrorResponse "Validation error"
-// @Failure 401 {object} transport_gin.ErrorResponse "User not authenticated"
-// @Failure 500 {object} transport_gin.ErrorResponse "Internal server error"
+// @Success 201 {object} dto.Response "Device added successfully"
+// @Failure 400 {object} dto.ErrorResponse "Validation error"
+// @Failure 401 {object} dto.ErrorResponse "User not authenticated"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security ApiKeyAuth
 // @Router /device/add [post]
 func (h *AddDeviceHandler) HandleGin(c *gin.Context) {
@@ -41,7 +41,7 @@ func (h *AddDeviceHandler) HandleGin(c *gin.Context) {
 	var request models.AddDeviceRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Printf("Error decoding request: %v", err)
-		transport_gin.SendBadRequestError(c, "Invalid request format")
+		response.BadRequest(c, "Invalid request format")
 		return
 	}
 
@@ -49,23 +49,23 @@ func (h *AddDeviceHandler) HandleGin(c *gin.Context) {
 	validationErrs := utils.Validate(request)
 	if validationErrs != nil {
 		log.Printf("Validation errors: %s", utils.ValidationErrorsToString(validationErrs))
-		transport_gin.SendBadRequestError(c, utils.CreateValidationError(validationErrs))
+		response.ValidationErrors(c, utils.CreateDtoValidationErrors(validationErrs))
 		return
 	}
 
 	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserIDFromGin(c)
 	if userID == "" {
-		transport_gin.SendError(c, http.StatusUnauthorized, "User not authenticated")
+		response.Unauthorized(c, "User not authenticated")
 		return
 	}
 
 	// Call service to add device
 	if err := h.deviceService.AddDevice(c.Request.Context(), request.DeviceID, request.DeviceName, userID); err != nil {
 		log.Printf("Error adding device: %v", err)
-		transport_gin.SendError(c, http.StatusInternalServerError, "Failed to add device")
+		response.InternalError(c, "Failed to add device")
 		return
 	}
 
-	transport_gin.SendResponse(c, http.StatusCreated, "Device added successfully")
+	response.Created(c, nil, "Device added successfully")
 }

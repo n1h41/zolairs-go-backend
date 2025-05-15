@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
-	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
+	"n1h41/zolaris-backend-app/internal/transport/response"
 	"n1h41/zolaris-backend-app/internal/utils"
 )
 
@@ -28,17 +29,17 @@ func NewAddCategoryHandler(categoryService *services.CategoryService) *AddCatego
 // @Accept json
 // @Produce json
 // @Param category body models.AddCategoryRequest true "Category information"
-// @Success 201 {object} transport_gin.Response "Category added successfully"
-// @Failure 400 {object} transport_gin.ErrorResponse "Validation error"
-// @Failure 409 {object} transport_gin.ErrorResponse "Category already exists"
-// @Failure 500 {object} transport_gin.ErrorResponse "Internal server error"
+// @Success 201 {object} dto.Response "Category added successfully"
+// @Failure 400 {object} dto.ErrorResponse "Validation error"
+// @Failure 409 {object} dto.ErrorResponse "Category already exists"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Router /category/add [post]
 func (h *AddCategoryHandler) HandleGin(c *gin.Context) {
 	// Parse request body
 	var request models.AddCategoryRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Printf("Error decoding request: %v", err)
-		transport_gin.SendBadRequestError(c, "Invalid request format")
+		response.BadRequest(c, "Invalid request format")
 		return
 	}
 
@@ -46,20 +47,20 @@ func (h *AddCategoryHandler) HandleGin(c *gin.Context) {
 	validationErrs := utils.Validate(request)
 	if validationErrs != nil {
 		log.Printf("Validation errors: %s", utils.ValidationErrorsToString(validationErrs))
-		transport_gin.SendBadRequestError(c, utils.CreateValidationError(validationErrs))
+		response.ValidationErrors(c, utils.CreateDtoValidationErrors(validationErrs))
 		return
 	}
 
 	// Call service to add category
 	if err := h.categoryService.AddCategory(c.Request.Context(), request.Name, request.Type); err != nil {
 		if err.Error() == "category with this name already exists" {
-			transport_gin.SendError(c, http.StatusConflict, "Category with this name already exists")
+			response.Error(c, http.StatusConflict, "Category with this name already exists", "CONFLICT")
 			return
 		}
 		log.Printf("Error adding category: %v", err)
-		transport_gin.SendError(c, http.StatusInternalServerError, "Failed to add category")
+		response.InternalError(c, "Failed to add category")
 		return
 	}
 
-	transport_gin.SendResponse(c, http.StatusCreated, "Category added successfully")
+	response.Created(c, nil, "Category added successfully")
 }

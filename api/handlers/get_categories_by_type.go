@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
 	"n1h41/zolaris-backend-app/internal/models"
 	"n1h41/zolaris-backend-app/internal/services"
-	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
+	"n1h41/zolaris-backend-app/internal/transport/response"
 )
 
 // GetCategoriesByTypeHandler handles requests to get categories by type
@@ -28,13 +29,13 @@ func NewGetCategoriesByTypeHandler(categoryService *services.CategoryService) *G
 // @Produce json
 // @Param type path string true "Category type"
 // @Success 200 {array} models.CategoryResponse "List of categories"
-// @Failure 500 {object} transport_gin.ErrorResponse "Internal server error"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Router /category/type/{type} [get]
 func (h *GetCategoriesByTypeHandler) HandleGin(c *gin.Context) {
 	// Get type from URL parameter
 	categoryType := c.Param("type")
 	if categoryType == "" {
-		transport_gin.SendBadRequestError(c, "Category type is required")
+		response.BadRequest(c, "Category type is required")
 		return
 	}
 
@@ -42,7 +43,7 @@ func (h *GetCategoriesByTypeHandler) HandleGin(c *gin.Context) {
 	categories, err := h.categoryService.GetCategoriesByType(c.Request.Context(), categoryType)
 	if err != nil {
 		log.Printf("Error getting categories: %v", err)
-		transport_gin.SendError(c, http.StatusInternalServerError, "Failed to get categories")
+		response.InternalError(c, "Failed to get categories")
 		return
 	}
 
@@ -53,4 +54,3 @@ func (h *GetCategoriesByTypeHandler) HandleGin(c *gin.Context) {
 
 	c.JSON(http.StatusOK, categories)
 }
-

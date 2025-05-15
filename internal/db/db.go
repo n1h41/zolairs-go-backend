@@ -11,11 +11,10 @@ import (
 
 // Database holds the database clients and configuration
 type Database struct {
-	dynamoClient    *dynamodb.Client
-	postgresPool    *pgxpool.Pool
-	deviceTable     string
+	dynamoClient     *dynamodb.Client
+	postgresPool     *pgxpool.Pool
+	deviceTable      string
 	machineDataTable string
-	userTable       string
 }
 
 // NewDatabase creates and initializes database clients
@@ -27,11 +26,10 @@ func NewDatabase(ctx context.Context, dynamoClient *dynamodb.Client, cfg *config
 	}
 
 	return &Database{
-		dynamoClient:    dynamoClient,
-		postgresPool:    pgDB.GetPool(),
-		deviceTable:     cfg.Database.DeviceTableName,
+		dynamoClient:     dynamoClient,
+		postgresPool:     pgDB.GetPool(),
+		deviceTable:      cfg.Database.DeviceTableName,
 		machineDataTable: cfg.Database.DataTableName,
-		userTable:       cfg.Database.UserTableName,
 	}, nil
 }
 
@@ -55,11 +53,6 @@ func (db *Database) GetMachineDataTableName() string {
 	return db.machineDataTable
 }
 
-// GetUserTableName returns the user table name
-func (db *Database) GetUserTableName() string {
-	return db.userTable
-}
-
 // Close closes all database connections
 func (db *Database) Close() {
 	// Close PostgreSQL connection if it's initialized
@@ -67,4 +60,3 @@ func (db *Database) Close() {
 		db.postgresPool.Close()
 	}
 }
-

@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"n1h41/zolaris-backend-app/internal/services"
-	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
+	"n1h41/zolaris-backend-app/internal/transport/response"
 )
 
 type CheckHasParentIDHandler struct {
@@ -38,9 +38,9 @@ func (h *CheckHasParentIDHandler) HandleGin(c *gin.Context) {
 	hasParentID, err := h.UserService.CheckHasParentID(c.Request.Context(), userID.(string))
 	if err != nil {
 		log.Printf("Error checking parent ID: %v", err)
-		transport_gin.SendError(c, 500, "Failed to check parent ID")
+		response.InternalError(c, "Failed to check parent ID")
 		return
 	}
 
-	transport_gin.SendResponse(c, 200, gin.H{"has_parent_id": hasParentID})
+	response.OK(c, gin.H{"has_parent_id": hasParentID}, "Success")
 }

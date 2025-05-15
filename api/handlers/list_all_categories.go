@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"log"
-	"n1h41/zolaris-backend-app/internal/models"
-	"n1h41/zolaris-backend-app/internal/services"
-	transport_gin "n1h41/zolaris-backend-app/internal/transport/gin"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"n1h41/zolaris-backend-app/internal/models"
+	"n1h41/zolaris-backend-app/internal/services"
+	"n1h41/zolaris-backend-app/internal/transport/response"
 )
 
 type ListAllCategoriesHandler struct {
@@ -15,7 +16,7 @@ type ListAllCategoriesHandler struct {
 }
 
 func NewListAllCategoriesHandler(categoryService *services.CategoryService) *ListAllCategoriesHandler {
-  return &ListAllCategoriesHandler{categoryService: categoryService}
+	return &ListAllCategoriesHandler{categoryService: categoryService}
 }
 
 // HandleGin handles requests using Gin framework
@@ -24,14 +25,14 @@ func NewListAllCategoriesHandler(categoryService *services.CategoryService) *Lis
 // @Tags Category Management
 // @Produce json
 // @Success 200 {array} models.CategoryResponse "List of categories"
-// @Failure 500 {object} transport_gin.ErrorResponse "Internal server error"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Router /category/all [get]
 func (h *ListAllCategoriesHandler) HandleGin(c *gin.Context) {
 	// Call service to get categories by type
 	categories, err := h.categoryService.GetAllCategories(c.Request.Context())
 	if err != nil {
 		log.Printf("Error getting categories: %v", err)
-		transport_gin.SendError(c, http.StatusInternalServerError, "Failed to get categories")
+		response.InternalError(c, "Failed to get categories")
 		return
 	}
 
