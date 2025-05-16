@@ -1,0 +1,1 @@
+ALTER TABLE z_users DROP COLUMN role;
