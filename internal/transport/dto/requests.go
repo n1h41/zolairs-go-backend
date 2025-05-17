@@ -39,7 +39,7 @@ type PolicyAttachRequest struct {
 // SensorDataRequest represents a request to get device sensor data
 type SensorDataRequest struct {
 	DeviceMacID string `json:"deviceMacId" validate:"required"`
-	Timestamp   int64  `json:"timestamp" validate:"required"`
+	Timestamp   string `json:"timestamp" validate:"required"`
 	DateMode    string `json:"dateMode" validate:"required,oneof=hourly daily weekly monthly yearly"`
 }
 
@@ -54,4 +54,3 @@ type PaginationParams struct {
 	Page     int `json:"page" form:"page" default:"0"`
 	PageSize int `json:"pageSize" form:"pageSize" default:"20"`
 }
-

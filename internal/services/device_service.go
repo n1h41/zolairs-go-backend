@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"log"
+	"strconv"
 	"time"
 
 	"n1h41/zolaris-backend-app/internal/repositories"
@@ -39,9 +40,16 @@ func (s *DeviceService) GetUserDevices(ctx context.Context, userID string) ([]*d
 }
 
 // GetDeviceSensorData retrieves sensor data for a device within a time range
-func (s *DeviceService) GetDeviceSensorData(ctx context.Context, macID, dateMode string, timestamp int64) ([]*dto.SensorDataResponse, error) {
+func (s *DeviceService) GetDeviceSensorData(ctx context.Context, macID, dateMode string, timestamp string) ([]*dto.SensorDataResponse, error) {
+	// Parse the int64 timestamp from the string
+	timestampMs, err := strconv.ParseInt(timestamp, 10, 64)
+	if err != nil {
+		log.Printf("Error parsing timestamp: %v", err)
+		return nil, err
+	}
+
 	// Calculate time range based on dateMode
-	startTime, endTime := s.calculateTimeRange(timestamp, dateMode)
+	startTime, endTime := s.calculateTimeRange(timestampMs, dateMode)
 	log.Printf("Getting sensor data for device %s from %d to %d", macID, startTime, endTime)
 
 	// Get raw sensor data

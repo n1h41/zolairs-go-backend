@@ -163,4 +163,3 @@ func (h *GetDeviceSensorDataHandler) HandleGin(c *gin.Context) {
 	// Use the data directly in the response
 	response.OK(c, data, "Data retrieved successfully")
 }
-
