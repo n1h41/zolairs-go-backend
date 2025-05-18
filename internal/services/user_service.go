@@ -5,55 +5,68 @@ import (
 	"fmt"
 	"log"
 
-	"n1h41/zolaris-backend-app/internal/models"
+	"n1h41/zolaris-backend-app/internal/domain"
 	"n1h41/zolaris-backend-app/internal/repositories"
+	"n1h41/zolaris-backend-app/internal/transport/dto"
+	"n1h41/zolaris-backend-app/internal/transport/mappers"
 )
 
+// UserService handles business logic for user operations
 type UserService struct {
-	userRepo *repositories.UserRepository
+	userRepo repositories.UserRepositoryInterface
 }
 
-func NewUserService(userRepo *repositories.UserRepository) *UserService {
+// NewUserService creates a new user service instance
+func NewUserService(userRepo repositories.UserRepositoryInterface) *UserService {
 	return &UserService{userRepo: userRepo}
 }
 
-// HasParentID checks if a user has a parent ID (for hierarchical user relationships)
-func (s *UserService) HasParentID(ctx context.Context, userID string) (bool, error) {
-	log.Printf("Checking if user %s has a parent ID", userID)
-	return s.userRepo.HasParentID(ctx, userID)
+// GetUserByID retrieves a user by their ID
+func (s *UserService) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {
+	log.Printf("Getting user details for user %s", userID)
+	return s.userRepo.GetUserByID(ctx, userID)
 }
 
-// UpdateUserDetails adds or updates user details for a specific user
-func (s *UserService) UpdateUserDetails(ctx context.Context, userID string, details *models.UserDetails) error {
-	log.Printf("Updating details for user %s", userID)
+// CreateUser creates a new user account
+func (s *UserService) CreateUser(ctx context.Context, req *dto.UserDetailsRequest) (*domain.User, error) {
+	// Convert DTO to domain entity
+	user := mappers.UserRequestToEntity(req, nil)
 
-	// Validate required user detail fields
-	if details.Email == "" || details.FirstName == "" || details.LastName == "" {
-		return fmt.Errorf("missing required user detail fields")
-	}
-
-	err := s.userRepo.UpdateUserDetails(ctx, userID, details)
+	// Save user to database
+	err := s.userRepo.CreateUser(ctx, user)
 	if err != nil {
-		log.Printf("Error in repository while updating user details: %v", err)
-		return err
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return nil
+	return user, nil
 }
 
-// GetUserDetails retrieves user details for a specific user
-func (s *UserService) GetUserDetails(ctx context.Context, userID string) (*models.UserDetails, error) {
-	log.Printf("Getting details for user %s", userID)
-
-	if userID == "" {
-		return nil, fmt.Errorf("userID cannot be empty")
-	}
-
-	userDetails, err := s.userRepo.GetUserDetails(ctx, userID)
+// UpdateUserDetails updates a user's details
+func (s *UserService) UpdateUserDetails(ctx context.Context, userID string, req *dto.UserDetailsRequest) (*domain.User, error) {
+	// Get existing user
+	existingUser, err := s.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
-		log.Printf("Error retrieving user details: %v", err)
-		return nil, fmt.Errorf("failed to retrieve user details: %w", err)
+		return nil, fmt.Errorf("error retrieving user: %w", err)
 	}
 
-	return userDetails, nil
+	if existingUser == nil {
+		return nil, fmt.Errorf("user not found with ID: %s", userID)
+	}
+
+	// Update user with new details
+	updatedUser := mappers.UserRequestToEntity(req, existingUser)
+
+	// Save updated user to database
+	err = s.userRepo.UpdateUser(ctx, updatedUser)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
+
+	return updatedUser, nil
 }
+
+// CheckHasParentID checks if a user has a parent ID
+func (s *UserService) CheckHasParentID(ctx context.Context, userID string) (bool, error) {
+	return s.userRepo.CheckHasParentID(ctx, userID)
+}
+

@@ -2,216 +2,270 @@ package repositories
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
-	"n1h41/zolaris-backend-app/internal/models"
+	"n1h41/zolaris-backend-app/internal/domain"
 )
 
+// UserRepository handles all user-related database operations with PostgreSQL
 type UserRepository struct {
-	db          *dynamodb.Client
-	userTable   string
-	entityTable string
+	db *pgxpool.Pool
 }
 
-func NewUserRepository(dbClient *dynamodb.Client) *UserRepository {
+// NewUserRepository creates a new user repository instance
+func NewUserRepository(dbPool *pgxpool.Pool) UserRepositoryInterface {
 	return &UserRepository{
-		db:          dbClient,
-		userTable:   "user_table",
-		entityTable: "entityTable",
+		db: dbPool,
 	}
 }
 
-func (r *UserRepository) WithTables(userTable, entityTable string) *UserRepository {
-	r.userTable = userTable
-	r.entityTable = entityTable
-	return r
-}
+// GetUserByID retrieves a user by ID from PostgreSQL
+func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {
+	query := `
+		SELECT user_id, email, first_name, last_name, phone, 
+		       address, parent_id, created_at, updated_at
+		FROM z_users 
+		WHERE user_id = $1
+	`
 
-func (r *UserRepository) HasParentID(ctx context.Context, userID string) (bool, error) {
-	input := &dynamodb.QueryInput{
-		TableName:              aws.String(r.entityTable),
-		IndexName:              aws.String("idType-index"),
-		KeyConditionExpression: aws.String("idType = :idType"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":idType": &types.AttributeValueMemberS{Value: userID},
-		},
-	}
+	row := r.db.QueryRow(ctx, query, userID)
 
-	result, err := r.db.Query(ctx, input)
+	user := &domain.User{}
+	var addressJSON []byte
+	var parentID *string
+
+	err := row.Scan(
+		&user.ID,
+		&user.Email,
+		&user.FirstName,
+		&user.LastName,
+		&user.Phone,
+		&addressJSON,
+		&parentID,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
 	if err != nil {
-		return false, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil // User not found, return nil without error
+		}
+		return nil, fmt.Errorf("database error: %w", err)
 	}
 
-	if len(result.Items) == 0 {
-		return false, nil
-	}
-
-	for _, item := range result.Items {
-		_, exists := item["parentId"]
-		if exists {
-			return true, nil
+	// Parse address from JSON
+	if len(addressJSON) > 0 && string(addressJSON) != "null" {
+		if err := json.Unmarshal(addressJSON, &user.Address); err != nil {
+			return nil, fmt.Errorf("failed to parse address JSON: %w", err)
 		}
 	}
 
-	return false, nil
+	user.ParentID = parentID // May be nil
+	return user, nil
 }
 
-// UpdateUserDetails adds or updates the user details for a specific user in DynamoDB
-func (r *UserRepository) UpdateUserDetails(ctx context.Context, userID string, details *models.UserDetails) error {
-	// First, check if the user exists
-	checkInput := &dynamodb.GetItemInput{
-		TableName: aws.String(r.userTable),
-		Key: map[string]types.AttributeValue{
-			"userId": &types.AttributeValueMemberS{Value: userID},
-		},
-		ProjectionExpression: aws.String("userId"),
-	}
-
-	checkResult, err := r.db.GetItem(ctx, checkInput)
+// CreateUser creates a new user in PostgreSQL
+func (r *UserRepository) CreateUser(ctx context.Context, user *domain.User) error {
+	// Convert address struct to JSON
+	addressJSON, err := json.Marshal(user.Address)
 	if err != nil {
-		return fmt.Errorf("error checking user existence: %w", err)
+		return fmt.Errorf("failed to convert address to JSON: %w", err)
 	}
 
-	if len(checkResult.Item) == 0 {
-		return fmt.Errorf("user with ID %s does not exist", userID)
+	query := `
+		INSERT INTO z_users (
+			user_id, email, first_name, last_name, phone,
+			address, parent_id, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	`
+
+	_, err = r.db.Exec(
+		ctx,
+		query,
+		user.ID,
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		user.Phone,
+		addressJSON,
+		user.ParentID,
+		user.CreatedAt,
+		user.UpdatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Create attribute values for the update expression
-	expressionAttrValues := map[string]types.AttributeValue{
-		":ud": &types.AttributeValueMemberM{
-			Value: map[string]types.AttributeValue{
-				"city":      &types.AttributeValueMemberS{Value: details.City},
-				"country":   &types.AttributeValueMemberS{Value: details.Country},
-				"email":     &types.AttributeValueMemberS{Value: details.Email},
-				"firstName": &types.AttributeValueMemberS{Value: details.FirstName},
-				"lastName":  &types.AttributeValueMemberS{Value: details.LastName},
-				"phone":     &types.AttributeValueMemberS{Value: details.Phone},
-				"region":    &types.AttributeValueMemberS{Value: details.Region},
-				"street1":   &types.AttributeValueMemberS{Value: details.Street1},
-				"zip":       &types.AttributeValueMemberS{Value: details.Zip},
-			},
-		},
-	}
-
-	// Add street2 only if it's not empty
-	if details.Street2 != "" {
-		expressionAttrValues[":ud"].(*types.AttributeValueMemberM).Value["street2"] = &types.AttributeValueMemberS{Value: details.Street2}
-	}
-
-	// Create update item input
-	input := &dynamodb.UpdateItemInput{
-		TableName: aws.String(r.userTable),
-		Key: map[string]types.AttributeValue{
-			"userId": &types.AttributeValueMemberS{Value: userID},
-		},
-		UpdateExpression:          aws.String("SET userDetails = :ud"),
-		ExpressionAttributeValues: expressionAttrValues,
-	}
-
-	// Execute the update
-	_, err = r.db.UpdateItem(ctx, input)
-	return err
+	return nil
 }
 
-// GetUserDetails retrieves the user details for a specific user from DynamoDB
-func (r *UserRepository) GetUserDetails(ctx context.Context, userID string) (*models.UserDetails, error) {
-	// Create get item input
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(r.userTable),
-		Key: map[string]types.AttributeValue{
-			"userId": &types.AttributeValueMemberS{Value: userID},
-		},
-		ProjectionExpression: aws.String("userDetails"),
-	}
-
-	// Execute the get item operation
-	result, err := r.db.GetItem(ctx, input)
+// UpdateUser updates user in PostgreSQL
+func (r *UserRepository) UpdateUser(ctx context.Context, user *domain.User) error {
+	// Convert address struct to JSON
+	addressJSON, err := json.Marshal(user.Address)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to convert address to JSON: %w", err)
 	}
 
-	// Check if the item exists and has userDetails
-	if len(result.Item) == 0 {
-		return nil, nil // User not found
+	query := `
+		UPDATE z_users SET
+			email = $1,
+			first_name = $2,
+			last_name = $3,
+			phone = $4,
+			address = $5,
+			parent_id = $6,
+			updated_at = $7
+		WHERE user_id = $8
+	`
+
+	// Update the timestamp
+	user.UpdatedAt = time.Now()
+
+	result, err := r.db.Exec(
+		ctx,
+		query,
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		user.Phone,
+		addressJSON,
+		user.ParentID,
+		user.UpdatedAt,
+		user.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
 	}
 
-	userDetailsAttr, exists := result.Item["userDetails"]
-	if !exists {
-		return nil, nil // User exists but has no details
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("user not found with ID: %s", user.ID)
 	}
 
-	// Parse the user details from the DynamoDB attribute
-	userDetailsMap, ok := userDetailsAttr.(*types.AttributeValueMemberM)
-	if !ok {
-		return nil, fmt.Errorf("unexpected attribute type for userDetails")
+	return nil
+}
+
+// CheckHasParentID checks if a user has a parent ID in PostgreSQL
+func (r *UserRepository) CheckHasParentID(ctx context.Context, userID string) (bool, error) {
+	query := `
+		SELECT 
+			CASE WHEN parent_id IS NULL THEN false ELSE true END 
+		FROM z_users 
+		WHERE user_id = $1
+	`
+
+	var hasParent bool
+	err := r.db.QueryRow(ctx, query, userID).Scan(&hasParent)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, fmt.Errorf("user not found: %w", err)
+		}
+		return false, fmt.Errorf("database error: %w", err)
 	}
 
-	userDetails := &models.UserDetails{}
+	return hasParent, nil
+}
 
-	// Extract each field from the map, safely handling missing attributes
-	if cityAttr, exists := userDetailsMap.Value["city"]; exists {
-		if v, ok := cityAttr.(*types.AttributeValueMemberS); ok {
-			userDetails.City = v.Value
+// GetUserByEmail retrieves a user by their email address
+func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	query := `
+		SELECT user_id, email, first_name, last_name, phone, 
+		       address, parent_id, created_at, updated_at
+		FROM z_users 
+		WHERE email = $1
+	`
+
+	row := r.db.QueryRow(ctx, query, email)
+
+	user := &domain.User{}
+	var addressJSON []byte
+	var parentID *string
+
+	err := row.Scan(
+		&user.ID,
+		&user.Email,
+		&user.FirstName,
+		&user.LastName,
+		&user.Phone,
+		&addressJSON,
+		&parentID,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil // User not found, return nil without error
+		}
+		return nil, fmt.Errorf("database error: %w", err)
+	}
+
+	// Parse address from JSON
+	if len(addressJSON) > 0 && string(addressJSON) != "null" {
+		if err := json.Unmarshal(addressJSON, &user.Address); err != nil {
+			return nil, fmt.Errorf("failed to parse address JSON: %w", err)
 		}
 	}
 
-	if countryAttr, exists := userDetailsMap.Value["country"]; exists {
-		if v, ok := countryAttr.(*types.AttributeValueMemberS); ok {
-			userDetails.Country = v.Value
+	user.ParentID = parentID
+	return user, nil
+}
+
+// GetChildUsers gets all child users for a parent user
+func (r *UserRepository) GetChildUsers(ctx context.Context, parentID string) ([]*domain.User, error) {
+	query := `
+		SELECT user_id, email, first_name, last_name, phone, 
+		       address, parent_id, created_at, updated_at
+		FROM z_users 
+		WHERE parent_id = $1
+	`
+
+	rows, err := r.db.Query(ctx, query, parentID)
+	if err != nil {
+		return nil, fmt.Errorf("database error: %w", err)
+	}
+	defer rows.Close()
+
+	var users []*domain.User
+	for rows.Next() {
+		user := &domain.User{}
+		var addressJSON []byte
+		var parentID *string
+
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.FirstName,
+			&user.LastName,
+			&user.Phone,
+			&addressJSON,
+			&parentID,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning user row: %w", err)
 		}
+
+		// Parse address from JSON
+		if len(addressJSON) > 0 && string(addressJSON) != "null" {
+			if err := json.Unmarshal(addressJSON, &user.Address); err != nil {
+				return nil, fmt.Errorf("failed to parse address JSON: %w", err)
+			}
+		}
+
+		user.ParentID = parentID
+		users = append(users, user)
 	}
 
-	if emailAttr, exists := userDetailsMap.Value["email"]; exists {
-		if v, ok := emailAttr.(*types.AttributeValueMemberS); ok {
-			userDetails.Email = v.Value
-		}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating user rows: %w", err)
 	}
 
-	if firstNameAttr, exists := userDetailsMap.Value["firstName"]; exists {
-		if v, ok := firstNameAttr.(*types.AttributeValueMemberS); ok {
-			userDetails.FirstName = v.Value
-		}
-	}
-
-	if lastNameAttr, exists := userDetailsMap.Value["lastName"]; exists {
-		if v, ok := lastNameAttr.(*types.AttributeValueMemberS); ok {
-			userDetails.LastName = v.Value
-		}
-	}
-
-	if phoneAttr, exists := userDetailsMap.Value["phone"]; exists {
-		if v, ok := phoneAttr.(*types.AttributeValueMemberS); ok {
-			userDetails.Phone = v.Value
-		}
-	}
-
-	if regionAttr, exists := userDetailsMap.Value["region"]; exists {
-		if v, ok := regionAttr.(*types.AttributeValueMemberS); ok {
-			userDetails.Region = v.Value
-		}
-	}
-
-	if street1Attr, exists := userDetailsMap.Value["street1"]; exists {
-		if v, ok := street1Attr.(*types.AttributeValueMemberS); ok {
-			userDetails.Street1 = v.Value
-		}
-	}
-
-	if street2Attr, exists := userDetailsMap.Value["street2"]; exists {
-		if v, ok := street2Attr.(*types.AttributeValueMemberS); ok {
-			userDetails.Street2 = v.Value
-		}
-	}
-
-	if zipAttr, exists := userDetailsMap.Value["zip"]; exists {
-		if v, ok := zipAttr.(*types.AttributeValueMemberS); ok {
-			userDetails.Zip = v.Value
-		}
-	}
-
-	return userDetails, nil
+	return users, nil
 }

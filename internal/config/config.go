@@ -26,7 +26,6 @@ type ServerConfig struct {
 type DatabaseConfig struct {
 	DeviceTableName  string
 	DataTableName    string
-	UserTableName    string
 	PostgresHost     string
 	PostgresPort     string
 	PostgresUser     string
@@ -79,7 +78,6 @@ func LoadConfig() (*Config, error) {
 	// Database config
 	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "DEVICE_TABLE_NAME")
 	config.Database.DataTableName = getEnv("DATA_TABLE_NAME", "machine_data_table")
-	config.Database.UserTableName = getEnv("USER_TABLE_NAME", "USER_TABLE_NAME")
 	config.Database.PostgresHost = getEnv("POSTGRES_HOST", "localhost")
 	config.Database.PostgresPort = getEnv("POSTGRES_PORT", "5432")
 	config.Database.PostgresUser = getEnv("POSTGRES_USER", "postgres")
@@ -119,7 +117,6 @@ func LoadConfigWithPath(envPaths ...string) (*Config, error) {
 	// Database config
 	config.Database.DeviceTableName = getEnv("DEVICE_TABLE_NAME", "machine_table")
 	config.Database.DataTableName = getEnv("DATA_TABLE_NAME", "machine_data_table")
-	config.Database.UserTableName = getEnv("USER_TABLE_NAME", "user_table")
 	config.Database.PostgresHost = getEnv("POSTGRES_HOST", "localhost")
 	config.Database.PostgresPort = getEnv("POSTGRES_PORT", "5432")
 	config.Database.PostgresUser = getEnv("POSTGRES_USER", "postgres")
