@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS ltree;
 
 CREATE TABLE IF NOT EXISTS z_entity (
   entity_id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
-  user_id references z_users(user_id) ON DELETE CASCADE,
+  user_id UUID,
   name varchar(255) NOT NULL,
   details JSONB NOT NULL DEFAULT '{}'::jsonb,
   category_id UUID NOT NULL,
@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS z_entity (
   depth INT NOT NULL DEFAULT 1,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(user_id) REFERENCES z_users(user_id) ON DELETE CASCADE,
   FOREIGN KEY(parent_id) REFERENCES z_entity(entity_id) ON DELETE SET NULL,
   FOREIGN KEY(category_id) REFERENCES z_category(category_id) ON DELETE CASCADE
 );

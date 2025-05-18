@@ -10,16 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"n1h41/zolaris-backend-app/internal/domain"
 )
-
-// DeviceDBModel represents how devices are stored in the database
-type DeviceDBModel struct {
-	MacAddress string `dynamodbav:"mac_address"`
-	UserID     string `dynamodbav:"user_id"`
-	DeviceName string `dynamodbav:"device_name"`
-}
 
 // SensorDataDBModel represents how sensor readings are stored in the database
 type SensorDataDBModel struct {
@@ -31,84 +25,96 @@ type SensorDataDBModel struct {
 
 // DeviceRepository handles all device-related database operations
 type DeviceRepository struct {
-	db           *dynamodb.Client
-	deviceTable  string
-	machineTable string
+	pgPool       *pgxpool.Pool    // PostgreSQL connection pool for device data
+	dynamoClient *dynamodb.Client // DynamoDB client for sensor data
+	machineTable string           // DynamoDB table for sensor readings
 }
 
 // NewDeviceRepository creates a new device repository instance
-func NewDeviceRepository(dbClient *dynamodb.Client) *DeviceRepository {
+func NewDeviceRepository(pgPool *pgxpool.Pool, dynamoClient *dynamodb.Client) *DeviceRepository {
 	return &DeviceRepository{
-		db:           dbClient,
-		deviceTable:  "machine_table",
+		pgPool:       pgPool,
+		dynamoClient: dynamoClient,
 		machineTable: "machine_data_table",
 	}
 }
 
-// WithTables sets the table names for the repository
-func (r *DeviceRepository) WithTables(deviceTable, machineTable string) *DeviceRepository {
-	r.deviceTable = deviceTable
+// WithMachineTable sets the machine data table name for the repository
+func (r *DeviceRepository) WithMachineTable(machineTable string) *DeviceRepository {
 	r.machineTable = machineTable
 	return r
 }
 
-// AddDevice adds a new device to the database
+// AddDevice adds a new device to the PostgreSQL database
 func (r *DeviceRepository) AddDevice(ctx context.Context, deviceID, deviceName, userID string) error {
-	// Create item
-	input := &dynamodb.PutItemInput{
-		TableName: aws.String(r.deviceTable),
-		Item: map[string]types.AttributeValue{
-			"mac_address": &types.AttributeValueMemberS{Value: deviceID},
-			"user_id":     &types.AttributeValueMemberS{Value: userID},
-			"device_name": &types.AttributeValueMemberS{Value: deviceName},
-		},
+	query := `
+		INSERT INTO z_device (
+			mac_address, user_id, device_name, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (mac_address) DO UPDATE SET
+			device_name = $3,
+			updated_at = $5
+	`
+
+	now := time.Now()
+	_, err := r.pgPool.Exec(
+		ctx,
+		query,
+		deviceID,
+		userID,
+		deviceName,
+		now,
+		now,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to add device: %w", err)
 	}
 
-	// Put item in DynamoDB
-	_, err := r.db.PutItem(ctx, input)
-	return err
+	return nil
 }
 
-// GetDevicesByUserID retrieves all devices for a specific user
+// GetDevicesByUserID retrieves all devices for a specific user from PostgreSQL
 func (r *DeviceRepository) GetDevicesByUserID(ctx context.Context, userID string) ([]*domain.Device, error) {
-	input := &dynamodb.QueryInput{
-		TableName:              aws.String(r.deviceTable),
-		IndexName:              aws.String("user_id-index"),
-		KeyConditionExpression: aws.String("user_id = :userId"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":userId": &types.AttributeValueMemberS{Value: userID},
-		},
-	}
+	query := `
+		SELECT mac_address, user_id, device_name, category, description, created_at, updated_at
+		FROM z_device
+		WHERE user_id = $1
+		ORDER BY device_name
+	`
 
-	// Execute the query
-	result, err := r.db.Query(ctx, input)
+	rows, err := r.pgPool.Query(ctx, query, userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database error: %w", err)
 	}
+	defer rows.Close()
 
-	// Unmarshal the results
-	var dbDevices []DeviceDBModel
-	err = attributevalue.UnmarshalListOfMaps(result.Items, &dbDevices)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert to domain model
-	domainDevices := make([]*domain.Device, len(dbDevices))
-	for i, device := range dbDevices {
-		domainDevices[i] = &domain.Device{
-			MacAddress: device.MacAddress,
-			UserID:     device.UserID,
-			Name:       device.DeviceName,
-			CreatedAt:  time.Now(), // We don't have this in DB, so default to current time
-			UpdatedAt:  time.Now(),
+	var devices []*domain.Device
+	for rows.Next() {
+		device := &domain.Device{}
+		err := rows.Scan(
+			&device.MacAddress,
+			&device.UserID,
+			&device.Name,
+			&device.Category,
+			&device.Description,
+			&device.CreatedAt,
+			&device.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning device row: %w", err)
 		}
+
+		devices = append(devices, device)
 	}
 
-	return domainDevices, nil
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating device rows: %w", err)
+	}
+
+	return devices, nil
 }
 
-// GetSensorData retrieves sensor data for a specific device within a time range
+// GetSensorData retrieves sensor data from DynamoDB for a specific device within a time range
 func (r *DeviceRepository) GetSensorData(ctx context.Context, macID string, startTime, endTime int64) ([]*domain.SensorReading, error) {
 	log.Printf("Table name: %s", r.machineTable)
 
@@ -127,7 +133,7 @@ func (r *DeviceRepository) GetSensorData(ctx context.Context, macID string, star
 
 	log.Printf("Querying sensor data for device %s from %d to %d", macID, startTime, endTime)
 
-	result, err := r.db.Query(ctx, input)
+	result, err := r.dynamoClient.Query(ctx, input)
 	if err != nil {
 		return nil, err
 	}
