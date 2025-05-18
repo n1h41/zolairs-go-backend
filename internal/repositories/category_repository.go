@@ -2,164 +2,157 @@ package repositories
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"n1h41/zolaris-backend-app/internal/domain"
 )
 
-// CategoryDBModel represents how the category is stored in the database
-type CategoryDBModel struct {
-	ID   string `dynamodbav:"id"`
-	Name string `dynamodbav:"name"`
-	Type string `dynamodbav:"type"`
-}
-
 // CategoryRepository handles all category-related database operations
 type CategoryRepository struct {
-	db            *dynamodb.Client
-	categoryTable string
+	db *pgxpool.Pool
 }
 
 // NewCategoryRepository creates a new category repository instance
-func NewCategoryRepository(dbClient *dynamodb.Client) *CategoryRepository {
+func NewCategoryRepository(dbPool *pgxpool.Pool) *CategoryRepository {
 	return &CategoryRepository{
-		db:            dbClient,
-		categoryTable: "categoryTable",
+		db: dbPool,
 	}
-}
-
-// WithTable sets the table name for the repository
-func (r *CategoryRepository) WithTable(categoryTable string) *CategoryRepository {
-	r.categoryTable = categoryTable
-	return r
 }
 
 // AddCategory adds a new category to the database
+// This implementation matches the current signature while internally
+// creating a proper Category object
 func (r *CategoryRepository) AddCategory(ctx context.Context, name, categoryType string) error {
-	// Create item
-	input := &dynamodb.PutItemInput{
-		TableName: aws.String(r.categoryTable),
-		Item: map[string]types.AttributeValue{
-			"name": &types.AttributeValueMemberS{Value: name},
-			"type": &types.AttributeValueMemberS{Value: categoryType},
-		},
+	query := `
+		INSERT INTO z_category (
+			category_id, name, type, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5)
+	`
+
+	// Generate a new UUID for the category
+	categoryID := uuid.New().String()
+	now := time.Now()
+
+	_, err := r.db.Exec(
+		ctx,
+		query,
+		categoryID,
+		name,
+		categoryType,
+		now,
+		now,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to add category: %w", err)
 	}
 
-	// Put item in DynamoDB
-	_, err := r.db.PutItem(ctx, input)
-	return err
+	return nil
 }
 
 // GetCategoryByName retrieves a category by its name
 func (r *CategoryRepository) GetCategoryByName(ctx context.Context, name string) (*domain.Category, error) {
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(r.categoryTable),
-		Key: map[string]types.AttributeValue{
-			"name": &types.AttributeValueMemberS{Value: name},
-		},
-	}
+	query := `
+		SELECT category_id, name, type, created_at
+		FROM z_category 
+		WHERE name = $1
+	`
 
-	// Execute the query
-	result, err := r.db.GetItem(ctx, input)
+	row := r.db.QueryRow(ctx, query, name)
+
+	category := &domain.Category{}
+	err := row.Scan(
+		&category.ID,
+		&category.Name,
+		&category.Type,
+		&category.CreatedAt,
+	)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil // Category not found, return nil without error
+		}
+		return nil, fmt.Errorf("database error: %w", err)
 	}
 
-	// If item not found
-	if result.Item == nil {
-		return nil, nil
-	}
-
-	// Unmarshal the results
-	var dbCategory CategoryDBModel
-	err = attributevalue.UnmarshalMap(result.Item, &dbCategory)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert to domain model
-	domainCategory := &domain.Category{
-		ID:   dbCategory.ID,
-		Name: dbCategory.Name,
-		Type: dbCategory.Type,
-	}
-
-	return domainCategory, nil
+	return category, nil
 }
 
 // GetCategoriesByType retrieves all categories of a specific type
 func (r *CategoryRepository) GetCategoriesByType(ctx context.Context, categoryType string) ([]*domain.Category, error) {
-	input := &dynamodb.QueryInput{
-		TableName:              aws.String(r.categoryTable),
-		IndexName:              aws.String("TypeIndex"),
-		KeyConditionExpression: aws.String("#type = :typeValue"),
-		ExpressionAttributeNames: map[string]string{
-			"#type": "type",
-		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":typeValue": &types.AttributeValueMemberS{Value: categoryType},
-		},
-	}
+	query := `
+		SELECT category_id, name, type, created_at
+		FROM z_category 
+		WHERE type = $1
+		ORDER BY name
+	`
 
-	// Execute the query
-	result, err := r.db.Query(ctx, input)
+	rows, err := r.db.Query(ctx, query, categoryType)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database error: %w", err)
 	}
+	defer rows.Close()
 
-	// Unmarshal the results
-	var dbCategories []CategoryDBModel
-	err = attributevalue.UnmarshalListOfMaps(result.Items, &dbCategories)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert to domain model
-	domainCategories := make([]*domain.Category, len(dbCategories))
-	for i, cat := range dbCategories {
-		domainCategories[i] = &domain.Category{
-			ID:   cat.ID,
-			Name: cat.Name,
-			Type: cat.Type,
+	var categories []*domain.Category
+	for rows.Next() {
+		category := &domain.Category{}
+		err := rows.Scan(
+			&category.ID,
+			&category.Name,
+			&category.Type,
+			&category.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning category row: %w", err)
 		}
+
+		categories = append(categories, category)
 	}
 
-	return domainCategories, nil
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating category rows: %w", err)
+	}
+
+	return categories, nil
 }
 
 // ListAllCategories retrieves all categories from the database
 func (r *CategoryRepository) ListAllCategories(ctx context.Context) ([]*domain.Category, error) {
-	// Create scan input
-	input := &dynamodb.ScanInput{
-		TableName: aws.String(r.categoryTable),
-	}
+	query := `
+		SELECT category_id, name, type, created_at
+		FROM z_category
+		ORDER BY type, name
+	`
 
-	// Execute the scan
-	result, err := r.db.Scan(ctx, input)
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database error: %w", err)
 	}
+	defer rows.Close()
 
-	// Unmarshal the results
-	var dbCategories []CategoryDBModel
-	err = attributevalue.UnmarshalListOfMaps(result.Items, &dbCategories)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert to domain model
-	domainCategories := make([]*domain.Category, len(dbCategories))
-	for i, cat := range dbCategories {
-		domainCategories[i] = &domain.Category{
-			ID:   cat.ID,
-			Name: cat.Name,
-			Type: cat.Type,
+	var categories []*domain.Category
+	for rows.Next() {
+		category := &domain.Category{}
+		err := rows.Scan(
+			&category.ID,
+			&category.Name,
+			&category.Type,
+			&category.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning category row: %w", err)
 		}
+
+		categories = append(categories, category)
 	}
 
-	return domainCategories, nil
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating category rows: %w", err)
+	}
+
+	return categories, nil
 }
