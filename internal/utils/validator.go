@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+
+	"n1h41/zolaris-backend-app/internal/transport/dto"
 )
 
 // ValidationErrorItem represents a validation error for a specific field
@@ -58,6 +60,18 @@ func CreateValidationError(errs []ValidationErrorItem) error {
 	return errors.New(ValidationErrorsToString(errs))
 }
 
+// CreateDtoValidationErrors converts internal validation errors to DTO validation errors
+func CreateDtoValidationErrors(errs []ValidationErrorItem) []dto.ValidationError {
+	result := make([]dto.ValidationError, len(errs))
+	for i, err := range errs {
+		result[i] = dto.ValidationError{
+			Field:   err.Field,
+			Message: err.Error,
+		}
+	}
+	return result
+}
+
 // formatValidationError formats a validation error into a readable message
 func formatValidationError(err validator.FieldError) string {
 	switch err.Tag() {
@@ -74,4 +88,3 @@ func formatValidationError(err validator.FieldError) string {
 	}
 	return fmt.Sprintf("failed validation for '%s'", err.Tag())
 }
-

@@ -60,12 +60,12 @@ func main() {
 	}
 
 	// Initialize repositories
-	deviceRepo := repositories.NewDeviceRepository(database.GetDynamoClient())
+	deviceRepo := repositories.NewDeviceRepository(database.GetPostgresPool(), database.GetDynamoClient())
 	policyRepo := repositories.NewPolicyRepository(awsClients.GetIoTClient())
-	categoryRepo := repositories.NewCategoryRepository(database.GetDynamoClient())
-	userRepo := repositories.NewUserRepository(database.GetDynamoClient())
+	categoryRepo := repositories.NewCategoryRepository(database.GetPostgresPool())
+	userRepo := repositories.NewUserRepository(database.GetPostgresPool())
 
-	deviceRepo.WithTables(database.GetDeviceTableName(), database.GetMachineDataTableName())
+	deviceRepo.WithMachineTable(database.GetMachineDataTableName())
 
 	// Initialize services
 	deviceService := services.NewDeviceService(deviceRepo)

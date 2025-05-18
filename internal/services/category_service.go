@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"log"
-	"n1h41/zolaris-backend-app/internal/models"
+
 	"n1h41/zolaris-backend-app/internal/repositories"
+	"n1h41/zolaris-backend-app/internal/transport/dto"
+	"n1h41/zolaris-backend-app/internal/transport/mappers"
 )
 
 // CategoryService handles business logic for category operations
@@ -36,18 +38,36 @@ func (s *CategoryService) AddCategory(ctx context.Context, name, categoryType st
 }
 
 // GetCategoryByName retrieves a category by its name
-func (s *CategoryService) GetCategoryByName(ctx context.Context, name string) (*models.CategoryResponse, error) {
+func (s *CategoryService) GetCategoryByName(ctx context.Context, name string) (*dto.CategoryResponse, error) {
 	log.Printf("Getting category with name %s", name)
-	return s.categoryRepo.GetCategoryByName(ctx, name)
-}
+	category, err := s.categoryRepo.GetCategoryByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
 
-// GetCategoriesByType retrieves all categories of a specific type
-func (s *CategoryService) GetCategoriesByType(ctx context.Context, categoryType string) ([]models.CategoryResponse, error) {
+	// Convert domain category to DTO
+	if category != nil {
+		return mappers.CategoryToResponse(category), nil
+	}
+
+	return nil, nil
+} // GetCategoriesByType retrieves all categories of a specific type
+func (s *CategoryService) GetCategoriesByType(ctx context.Context, categoryType string) ([]*dto.CategoryResponse, error) {
 	log.Printf("Getting categories of type %s", categoryType)
-	return s.categoryRepo.GetCategoriesByType(ctx, categoryType)
+	categories, err := s.categoryRepo.GetCategoriesByType(ctx, categoryType)
+	if err != nil {
+		return nil, err
+	}
+
+	return mappers.CategoriesToResponses(categories), nil
 }
 
-func (s *CategoryService) GetAllCategories(ctx context.Context) ([]models.CategoryResponse, error) {
+func (s *CategoryService) GetAllCategories(ctx context.Context) ([]*dto.CategoryResponse, error) {
 	log.Println("List all categories")
-	return s.categoryRepo.ListAllCategories(ctx)
+	categories, err := s.categoryRepo.ListAllCategories(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mappers.CategoriesToResponses(categories), nil
 }

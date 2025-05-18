@@ -3,9 +3,12 @@ package services
 import (
 	"context"
 	"log"
-	"n1h41/zolaris-backend-app/internal/models"
-	"n1h41/zolaris-backend-app/internal/repositories"
+	"strconv"
 	"time"
+
+	"n1h41/zolaris-backend-app/internal/repositories"
+	"n1h41/zolaris-backend-app/internal/transport/dto"
+	"n1h41/zolaris-backend-app/internal/transport/mappers"
 )
 
 // DeviceService handles business logic for device operations
@@ -26,17 +29,37 @@ func (s *DeviceService) AddDevice(ctx context.Context, deviceID, deviceName, use
 }
 
 // GetUserDevices retrieves all devices for a user
-func (s *DeviceService) GetUserDevices(ctx context.Context, userID string) ([]models.DeviceResponse, error) {
+func (s *DeviceService) GetUserDevices(ctx context.Context, userID string) ([]*dto.DeviceResponse, error) {
 	log.Printf("Getting devices for user %s", userID)
-	return s.deviceRepo.GetDevicesByUserID(ctx, userID)
+	devices, err := s.deviceRepo.GetDevicesByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return mappers.DevicesToResponses(devices), nil
 }
 
 // GetDeviceSensorData retrieves sensor data for a device within a time range
-func (s *DeviceService) GetDeviceSensorData(ctx context.Context, macID, dateMode string, timestamp int64) ([]models.SensorData, error) {
+func (s *DeviceService) GetDeviceSensorData(ctx context.Context, macID, dateMode string, timestamp string) ([]*dto.SensorDataResponse, error) {
+	// Parse the int64 timestamp from the string
+	timestampMs, err := strconv.ParseInt(timestamp, 10, 64)
+	if err != nil {
+		log.Printf("Error parsing timestamp: %v", err)
+		return nil, err
+	}
+
 	// Calculate time range based on dateMode
-	startTime, endTime := s.calculateTimeRange(timestamp, dateMode)
+	startTime, endTime := s.calculateTimeRange(timestampMs, dateMode)
 	log.Printf("Getting sensor data for device %s from %d to %d", macID, startTime, endTime)
-	return s.deviceRepo.GetSensorData(ctx, macID, startTime, endTime)
+
+	// Get raw sensor data
+	sensorData, err := s.deviceRepo.GetSensorData(ctx, macID, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to DTO responses using the mapper
+	return mappers.SensorReadingsToResponses(sensorData), nil
 }
 
 // calculateTimeRange calculates a time range looking backward from the provided timestamp
