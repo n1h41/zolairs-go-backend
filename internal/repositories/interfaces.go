@@ -8,6 +8,7 @@ import (
 
 // UserRepositoryInterface defines the operations for user data
 type UserRepositoryInterface interface {
+	GetUserIdByCognitoId(ctx context.Context, cId string) (string, error)
 	GetUserByID(ctx context.Context, userID string) (*domain.User, error)
 	CreateUser(ctx context.Context, user *domain.User) error
 	UpdateUser(ctx context.Context, user *domain.User) error

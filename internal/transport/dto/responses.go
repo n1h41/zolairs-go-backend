@@ -29,8 +29,8 @@ type ValidationError struct {
 type UserResponse struct {
 	ID        string        `json:"id"`
 	Email     string        `json:"email"`
-	FirstName string        `json:"firstName"`
-	LastName  string        `json:"lastName"`
+	FirstName *string       `json:"firstName"`
+	LastName  *string       `json:"lastName"`
 	Phone     *string       `json:"phone"`
 	Address   AddressOutput `json:"address"`
 	ParentID  string        `json:"parentId,omitempty"`

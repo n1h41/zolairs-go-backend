@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.AddCategoryRequest"
+                            "$ref": "#/definitions/dto.CategoryRequest"
                         }
                     }
                 ],
@@ -43,25 +43,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Category added successfully",
                         "schema": {
-                            "$ref": "#/definitions/gin.Response"
+                            "$ref": "#/definitions/dto.Response"
                         }
                     },
                     "400": {
                         "description": "Validation error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Category already exists",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -83,14 +83,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.CategoryResponse"
+                                "$ref": "#/definitions/dto.CategoryResponse"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -124,14 +124,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.CategoryResponse"
+                                "$ref": "#/definitions/dto.CategoryResponse"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -169,7 +169,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.AddDeviceRequest"
+                            "$ref": "#/definitions/dto.DeviceRequest"
                         }
                     }
                 ],
@@ -177,25 +177,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Device added successfully",
                         "schema": {
-                            "$ref": "#/definitions/gin.Response"
+                            "$ref": "#/definitions/dto.Response"
                         }
                     },
                     "400": {
                         "description": "Validation error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -221,7 +221,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.AttachIotPolicyRequest"
+                            "$ref": "#/definitions/dto.PolicyAttachRequest"
                         }
                     }
                 ],
@@ -229,19 +229,19 @@ const docTemplate = `{
                     "200": {
                         "description": "IoT policy attached successfully",
                         "schema": {
-                            "$ref": "#/definitions/gin.Response"
+                            "$ref": "#/definitions/dto.Response"
                         }
                     },
                     "400": {
                         "description": "Invalid request or validation error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to attach IoT policy",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -267,7 +267,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.GetDeviceSensorDataRequest"
+                            "$ref": "#/definitions/dto.SensorDataRequest"
                         }
                     }
                 ],
@@ -275,19 +275,34 @@ const docTemplate = `{
                     "200": {
                         "description": "Sensor data for the device",
                         "schema": {
-                            "$ref": "#/definitions/models.GetDeviceSensorDataResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.SensorDataResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "Invalid request or validation error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -298,6 +313,9 @@ const docTemplate = `{
                 "description": "Checks if the authenticated user has a parent ID set in their profile",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "User Management"
                 ],
                 "summary": "Check if user has parent ID",
                 "parameters": [
@@ -342,9 +360,20 @@ const docTemplate = `{
         },
         "/user/details": {
             "get": {
-                "description": "Retrieves the user details for the authenticated user",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieve authenticated user's profile information",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "User Management"
                 ],
                 "summary": "Get user details",
                 "parameters": [
@@ -358,39 +387,58 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "No user details found (null response)",
+                        "description": "User details retrieved successfully",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "401": {
-                        "description": "Error when user is not authenticated",
+                        "description": "User not authenticated",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Error when retrieving user details fails",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Updates or adds user details for the authenticated user",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update the authenticated user's profile information",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "User Management"
                 ],
                 "summary": "Update user details",
                 "parameters": [
@@ -402,12 +450,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "User details information",
-                        "name": "request",
+                        "description": "User details",
+                        "name": "user",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.UserDetailsRequest"
+                            "$ref": "#/definitions/dto.UserDetailsRequest"
                         }
                     }
                 ],
@@ -415,35 +463,37 @@ const docTemplate = `{
                     "200": {
                         "description": "User details updated successfully",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Error when request validation fails",
+                        "description": "Validation error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "401": {
-                        "description": "Error when user is not authenticated",
+                        "description": "User not authenticated",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Error when updating user details fails",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -482,20 +532,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.DeviceResponse"
+                                "$ref": "#/definitions/dto.DeviceResponse"
                             }
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/gin.ErrorResponse"
+                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }
@@ -503,42 +553,30 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "gin.ErrorResponse": {
-            "description": "Standard API error response format",
+        "dto.AddressOutput": {
             "type": "object",
             "properties": {
-                "message": {
-                    "description": "Error message",
-                    "type": "string",
-                    "example": "Something went wrong"
+                "city": {
+                    "type": "string"
                 },
-                "status": {
-                    "description": "Always false for errors",
-                    "type": "boolean",
-                    "example": false
+                "country": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "street1": {
+                    "type": "string"
+                },
+                "street2": {
+                    "type": "string"
+                },
+                "zip": {
+                    "type": "string"
                 }
             }
         },
-        "gin.Response": {
-            "description": "Standard API success response format",
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Optional data payload"
-                },
-                "message": {
-                    "description": "Optional success message",
-                    "type": "string",
-                    "example": "Operation successful"
-                },
-                "status": {
-                    "description": "Indicates success status",
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "models.AddCategoryRequest": {
+        "dto.CategoryRequest": {
             "type": "object",
             "required": [
                 "name",
@@ -557,13 +595,33 @@ const docTemplate = `{
                 }
             }
         },
-        "models.AddDeviceRequest": {
+        "dto.CategoryResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.DeviceRequest": {
             "type": "object",
             "required": [
                 "deviceId",
                 "deviceName"
             ],
             "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
                 "deviceId": {
                     "type": "string",
                     "maxLength": 50,
@@ -576,7 +634,41 @@ const docTemplate = `{
                 }
             }
         },
-        "models.AttachIotPolicyRequest": {
+        "dto.DeviceResponse": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.PolicyAttachRequest": {
             "type": "object",
             "required": [
                 "identityId"
@@ -587,32 +679,22 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CategoryResponse": {
+        "dto.Response": {
             "type": "object",
             "properties": {
-                "name": {
+                "data": {},
+                "error": {
                     "type": "string"
                 },
-                "type": {
+                "message": {
                     "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         },
-        "models.DeviceResponse": {
-            "type": "object",
-            "properties": {
-                "device_name": {
-                    "type": "string"
-                },
-                "mac_address": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.GetDeviceSensorDataRequest": {
+        "dto.SensorDataRequest": {
             "type": "object",
             "required": [
                 "dateMode",
@@ -638,18 +720,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.GetDeviceSensorDataResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.SensorData"
-                    }
-                }
-            }
-        },
-        "models.SensorData": {
+        "dto.SensorDataResponse": {
             "type": "object",
             "properties": {
                 "amperage": {
@@ -666,42 +737,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.UserDetails": {
-            "type": "object",
-            "properties": {
-                "city": {
-                    "type": "string"
-                },
-                "country": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "firstName": {
-                    "type": "string"
-                },
-                "lastName": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "region": {
-                    "type": "string"
-                },
-                "street1": {
-                    "type": "string"
-                },
-                "street2": {
-                    "type": "string"
-                },
-                "zip": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.UserDetailsRequest": {
+        "dto.UserDetailsRequest": {
             "type": "object",
             "required": [
                 "city",
@@ -730,6 +766,9 @@ const docTemplate = `{
                 "lastName": {
                     "type": "string"
                 },
+                "parentId": {
+                    "type": "string"
+                },
                 "phone": {
                     "type": "string"
                 },
@@ -743,6 +782,35 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "zip": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/dto.AddressOutput"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lastName": {
+                    "type": "string"
+                },
+                "parentId": {
+                    "type": "string"
+                },
+                "phone": {
                     "type": "string"
                 }
             }

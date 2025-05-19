@@ -5,14 +5,23 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"n1h41/zolaris-backend-app/internal/services"
 )
 
 // GinAuthMiddleware checks for user authentication
 // This is a simplified version - in a real app, use JWT or OAuth2
-func GinAuthMiddleware() gin.HandlerFunc {
+func GinAuthMiddleware(userService *services.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get user ID from header
-		userID := c.GetHeader("X-User-ID")
+		cogntioId := c.GetHeader("X-User-ID")
+
+		userID, err := userService.GetUserIdByCognitoId(c.Request.Context(), cogntioId)
+		if err != nil {
+			log.Printf("Error retrieving user ID by Cognito ID: %v", err)
+			c.JSON(500, gin.H{"status": false, "message": "Internal server error"})
+			c.Abort()
+			return
+		}
 
 		// For demo purposes only - in production, never use a default user
 		if userID == "" {
