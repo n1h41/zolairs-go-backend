@@ -1,10 +1,12 @@
 .aws-sam/
 .aws-sam
+
 .env
 .env.development
 .env.production
+
 zolaris-backend
+
 tmp
 tmp/build-errors.log
 tmp/build-errors.log
-tmp
