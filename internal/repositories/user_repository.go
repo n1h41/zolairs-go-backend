@@ -25,6 +25,21 @@ func NewUserRepository(dbPool *pgxpool.Pool) UserRepositoryInterface {
 	}
 }
 
+func (r *UserRepository) GetUserIdByCognitoId(ctx context.Context, cId string) (string, error) {
+	var userId string
+
+	query := `select user_id from z_users where cognito_id = $1`
+
+	if err := r.db.QueryRow(ctx, query, cId).Scan(&userId); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil // User not found
+		}
+		return "", fmt.Errorf("failed to get user ID by Cognito ID: %w", err)
+	}
+
+	return userId, nil
+}
+
 // GetUserByID retrieves a user by ID from PostgreSQL
 func (r *UserRepository) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {
 	query := `

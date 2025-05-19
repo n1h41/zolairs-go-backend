@@ -171,4 +171,3 @@ func (h *CheckHasParentIDHandler) HandleGin(c *gin.Context) {
 
 	response.OK(c, gin.H{"has_parent_id": hasParentID}, "Success")
 }
-

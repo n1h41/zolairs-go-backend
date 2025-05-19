@@ -139,7 +139,7 @@ func main() {
 
 	// Group private routes (require authentication)
 	private := r.Group("/")
-	private.Use(middleware.GinAuthMiddleware())
+	private.Use(middleware.GinAuthMiddleware(userService))
 	{
 		private.POST("/device/add", addDeviceHandler.HandleGin)
 		private.GET("/user/devices", listUserDevicesHandler.HandleGin)
