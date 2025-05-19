@@ -10,8 +10,8 @@ import (
 type User struct {
 	ID        string    `json:"id" db:"user_id"`
 	Email     string    `json:"email" db:"email"`
-	FirstName string    `json:"firstName" db:"first_name"`
-	LastName  string    `json:"lastName" db:"last_name"`
+	FirstName *string   `json:"firstName" db:"first_name"`
+	LastName  *string   `json:"lastName" db:"last_name"`
 	Phone     *string   `json:"phone" db:"phone"`
 	Address   Address   `json:"address"`
 	ParentID  *string   `json:"parentId,omitempty" db:"parent_id"`
@@ -64,8 +64,8 @@ func NewUser(email, firstName, lastName, phone string) *User {
 	return &User{
 		ID:        uuid.New().String(),
 		Email:     email,
-		FirstName: firstName,
-		LastName:  lastName,
+		FirstName: &firstName,
+		LastName:  &lastName,
 		Phone:     &phone,
 		CreatedAt: now,
 		UpdatedAt: now,

@@ -1,31 +1,20 @@
 definitions:
-  gin.ErrorResponse:
-    description: Standard API error response format
+  dto.AddressOutput:
     properties:
-      message:
-        description: Error message
-        example: Something went wrong
+      city:
         type: string
-      status:
-        description: Always false for errors
-        example: false
-        type: boolean
-    type: object
-  gin.Response:
-    description: Standard API success response format
-    properties:
-      data:
-        description: Optional data payload
-      message:
-        description: Optional success message
-        example: Operation successful
+      country:
         type: string
-      status:
-        description: Indicates success status
-        example: true
-        type: boolean
+      region:
+        type: string
+      street1:
+        type: string
+      street2:
+        type: string
+      zip:
+        type: string
     type: object
-  models.AddCategoryRequest:
+  dto.CategoryRequest:
     properties:
       name:
         maxLength: 50
@@ -39,8 +28,21 @@ definitions:
     - name
     - type
     type: object
-  models.AddDeviceRequest:
+  dto.CategoryResponse:
     properties:
+      id:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  dto.DeviceRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
       deviceId:
         maxLength: 50
         minLength: 3
@@ -53,30 +55,46 @@ definitions:
     - deviceId
     - deviceName
     type: object
-  models.AttachIotPolicyRequest:
+  dto.DeviceResponse:
+    properties:
+      category:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      deviceId:
+        type: string
+      deviceName:
+        type: string
+    type: object
+  dto.ErrorResponse:
+    properties:
+      code:
+        type: string
+      error:
+        type: string
+      success:
+        type: boolean
+    type: object
+  dto.PolicyAttachRequest:
     properties:
       identityId:
         type: string
     required:
     - identityId
     type: object
-  models.CategoryResponse:
+  dto.Response:
     properties:
-      name:
+      data: {}
+      error:
         type: string
-      type:
+      message:
         type: string
+      success:
+        type: boolean
     type: object
-  models.DeviceResponse:
-    properties:
-      device_name:
-        type: string
-      mac_address:
-        type: string
-      user_id:
-        type: string
-    type: object
-  models.GetDeviceSensorDataRequest:
+  dto.SensorDataRequest:
     properties:
       dateMode:
         enum:
@@ -95,14 +113,7 @@ definitions:
     - deviceMacId
     - timestamp
     type: object
-  models.GetDeviceSensorDataResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/models.SensorData'
-        type: array
-    type: object
-  models.SensorData:
+  dto.SensorDataResponse:
     properties:
       amperage:
         type: string
@@ -113,7 +124,7 @@ definitions:
       timestamp:
         type: integer
     type: object
-  models.UserDetails:
+  dto.UserDetailsRequest:
     properties:
       city:
         type: string
@@ -125,28 +136,7 @@ definitions:
         type: string
       lastName:
         type: string
-      phone:
-        type: string
-      region:
-        type: string
-      street1:
-        type: string
-      street2:
-        type: string
-      zip:
-        type: string
-    type: object
-  models.UserDetailsRequest:
-    properties:
-      city:
-        type: string
-      country:
-        type: string
-      email:
-        type: string
-      firstName:
-        type: string
-      lastName:
+      parentId:
         type: string
       phone:
         type: string
@@ -169,6 +159,25 @@ definitions:
     - street1
     - zip
     type: object
+  dto.UserResponse:
+    properties:
+      address:
+        $ref: '#/definitions/dto.AddressOutput'
+      createdAt:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      parentId:
+        type: string
+      phone:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -183,26 +192,26 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/models.AddCategoryRequest'
+          $ref: '#/definitions/dto.CategoryRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Category added successfully
           schema:
-            $ref: '#/definitions/gin.Response'
+            $ref: '#/definitions/dto.Response'
         "400":
           description: Validation error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "409":
           description: Category already exists
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
       summary: Add a new category
       tags:
       - Category Management
@@ -216,12 +225,12 @@ paths:
           description: List of categories
           schema:
             items:
-              $ref: '#/definitions/models.CategoryResponse'
+              $ref: '#/definitions/dto.CategoryResponse'
             type: array
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
       summary: Get all categories
       tags:
       - Category Management
@@ -243,12 +252,12 @@ paths:
           description: List of categories
           schema:
             items:
-              $ref: '#/definitions/models.CategoryResponse'
+              $ref: '#/definitions/dto.CategoryResponse'
             type: array
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
       summary: Get categories by type
       tags:
       - Category Management
@@ -268,26 +277,26 @@ paths:
         name: device
         required: true
         schema:
-          $ref: '#/definitions/models.AddDeviceRequest'
+          $ref: '#/definitions/dto.DeviceRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Device added successfully
           schema:
-            $ref: '#/definitions/gin.Response'
+            $ref: '#/definitions/dto.Response'
         "400":
           description: Validation error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Add a new device
@@ -304,22 +313,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.AttachIotPolicyRequest'
+          $ref: '#/definitions/dto.PolicyAttachRequest'
       produces:
       - application/json
       responses:
         "200":
           description: IoT policy attached successfully
           schema:
-            $ref: '#/definitions/gin.Response'
+            $ref: '#/definitions/dto.Response'
         "400":
           description: Invalid request or validation error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
           description: Failed to attach IoT policy
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
       summary: Attach IoT policy
       tags:
       - Policy Management
@@ -334,22 +343,29 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.GetDeviceSensorDataRequest'
+          $ref: '#/definitions/dto.SensorDataRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Sensor data for the device
           schema:
-            $ref: '#/definitions/models.GetDeviceSensorDataResponse'
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.SensorDataResponse'
+                  type: array
+              type: object
         "400":
           description: Invalid request or validation error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
       summary: Get device sensor data
       tags:
       - Device Data
@@ -384,9 +400,13 @@ paths:
               type: string
             type: object
       summary: Check if user has parent ID
+      tags:
+      - User Management
   /user/details:
     get:
-      description: Retrieves the user details for the authenticated user
+      consumes:
+      - application/json
+      description: Retrieve authenticated user's profile information
       parameters:
       - description: User ID
         in: header
@@ -397,66 +417,76 @@ paths:
       - application/json
       responses:
         "200":
-          description: No user details found (null response)
+          description: User details retrieved successfully
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserResponse'
+              type: object
         "401":
-          description: Error when user is not authenticated
+          description: User not authenticated
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
-          description: Error when retrieving user details fails
+          description: Internal server error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get user details
+      tags:
+      - User Management
     post:
       consumes:
       - application/json
-      description: Updates or adds user details for the authenticated user
+      description: Update the authenticated user's profile information
       parameters:
       - description: User ID
         in: header
         name: X-User-ID
         required: true
         type: string
-      - description: User details information
+      - description: User details
         in: body
-        name: request
+        name: user
         required: true
         schema:
-          $ref: '#/definitions/models.UserDetailsRequest'
+          $ref: '#/definitions/dto.UserDetailsRequest'
       produces:
       - application/json
       responses:
         "200":
           description: User details updated successfully
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserResponse'
+              type: object
         "400":
-          description: Error when request validation fails
+          description: Validation error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.ErrorResponse'
         "401":
-          description: Error when user is not authenticated
+          description: User not authenticated
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
-          description: Error when updating user details fails
+          description: Internal server error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Update user details
+      tags:
+      - User Management
   /user/devices:
     get:
       consumes:
@@ -475,16 +505,16 @@ paths:
           description: List of user devices
           schema:
             items:
-              $ref: '#/definitions/models.DeviceResponse'
+              $ref: '#/definitions/dto.DeviceResponse'
             type: array
         "401":
           description: User not authenticated
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/gin.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: List user devices
