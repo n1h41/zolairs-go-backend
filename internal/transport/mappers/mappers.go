@@ -49,8 +49,8 @@ func UserRequestToEntity(req *dto.UserDetailsRequest, existingUser *domain.User)
 	}
 
 	user.Email = req.Email
-	user.FirstName = req.FirstName
-	user.LastName = req.LastName
+	user.FirstName = &req.FirstName
+	user.LastName = &req.LastName
 	user.Phone = &req.Phone
 	user.Address = domain.Address{
 		Street1: req.Street1,

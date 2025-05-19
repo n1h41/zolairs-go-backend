@@ -21,6 +21,11 @@ func NewUserService(userRepo repositories.UserRepositoryInterface) *UserService 
 	return &UserService{userRepo: userRepo}
 }
 
+func (s *UserService) GetUserIdByCognitoId(ctx context.Context, cId string) (string, error) {
+	log.Printf("Getting user ID by Cognito ID: %s", cId)
+	return s.userRepo.GetUserIdByCognitoId(ctx, cId)
+}
+
 // GetUserByID retrieves a user by their ID
 func (s *UserService) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {
 	log.Printf("Getting user details for user %s", userID)
@@ -69,4 +74,3 @@ func (s *UserService) UpdateUserDetails(ctx context.Context, userID string, req 
 func (s *UserService) CheckHasParentID(ctx context.Context, userID string) (bool, error) {
 	return s.userRepo.CheckHasParentID(ctx, userID)
 }
-
