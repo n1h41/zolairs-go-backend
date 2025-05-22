@@ -129,14 +129,12 @@ func (r *UserRepository) UpdateUser(ctx context.Context, user *domain.User) erro
 
 	query := `
 		UPDATE z_users SET
-			email = $1,
-			first_name = $2,
-			last_name = $3,
-			phone = $4,
-			address = $5,
-			parent_id = $6,
-			updated_at = $7
-		WHERE user_id = $8
+			first_name = $1,
+			last_name = $2,
+			phone = $3,
+			address = $4,
+			updated_at = $5
+		WHERE user_id = $6
 	`
 
 	// Update the timestamp
@@ -145,12 +143,10 @@ func (r *UserRepository) UpdateUser(ctx context.Context, user *domain.User) erro
 	result, err := r.db.Exec(
 		ctx,
 		query,
-		user.Email,
 		user.FirstName,
 		user.LastName,
 		user.Phone,
 		addressJSON,
-		user.ParentID,
 		user.UpdatedAt,
 		user.ID,
 	)
