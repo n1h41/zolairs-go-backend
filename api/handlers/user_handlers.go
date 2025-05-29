@@ -29,7 +29,7 @@ func NewGetUserDetailsHandler(userService *services.UserService) *GetUserDetails
 // @Tags User Management
 // @Accept json
 // @Produce json
-// @Param X-User-ID header string true "User ID"
+// @Param X-Cognito-ID header string true "Cognito ID"
 // @Success 200 {object} dto.Response{data=dto.UserResponse} "User details retrieved successfully"
 // @Failure 401 {object} dto.ErrorResponse "User not authenticated"
 // @Failure 404 {object} dto.ErrorResponse "User not found"

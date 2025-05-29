@@ -1,11 +1,30 @@
 services:
+  database:
+    image: postgres:17
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
   app-dev:
     build:
       context: .
       dockerfile: Dockerfile.dev
 
+    cap_add:
+        - SYS_PTRACE
+    security_opt:
+        - seccomp:unconfined
+        - apparmor:unconfined
     ports:
       - "8080:8080"
+      - 40000:40000
     environment:
         - ENVIRONMENT=development
         - PORT=8080
@@ -16,19 +35,25 @@ services:
         - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
         - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
         - AWS_REGION=${AWS_REGION}
-        - POSTGRES_HOST=${POSTGRES_HOST}
+        - POSTGRES_HOST=database
         - POSTGRES_PORT=${POSTGRES_PORT}
         - POSTGRES_USER=${POSTGRES_USER}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
         - POSTGRES_DB_NAME=${POSTGRES_DB_NAME}
         - POSTGRES_SSL_MODE=${POSTGRES_SSL_MODE}
     volumes:
-      - ./:/app
+      - ./:/home/n1h41/dev/go/works/zolaris-backend
     restart: unless-stopped
     command: air
+    depends_on:
+      - database
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  postgres_data:
+    driver: local

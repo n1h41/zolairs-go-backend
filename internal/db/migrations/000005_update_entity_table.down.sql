@@ -1,0 +1,6 @@
+BEGIN;
+
+ALTER TABLE z_entity
+  DROP CONSTRAINT IF EXISTS user_id_unique;
+
+COMMIT;

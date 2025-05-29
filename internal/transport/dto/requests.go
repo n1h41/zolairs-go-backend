@@ -54,3 +54,30 @@ type PaginationParams struct {
 	Page     int `json:"page" form:"page" default:"0"`
 	PageSize int `json:"pageSize" form:"pageSize" default:"20"`
 }
+
+// CreateRootEntityRequest represents a request to create a root entity
+type CreateRootEntityRequest struct {
+	CategoryID string         `json:"categoryId" validate:"required,uuid"`
+	Name       string         `json:"name" validate:"required,min=2,max=100"`
+	Details    map[string]any `json:"details,omitempty"`
+}
+
+// CreateSubEntityRequest represents a request to create a child entity
+type CreateSubEntityRequest struct {
+	CategoryID     string         `json:"categoryId" validate:"required,uuid"`
+	Name           string         `json:"name" validate:"required,min=2,max=100"`
+	Details        map[string]any `json:"details,omitempty"`
+	ParentEntityID string         `json:"parentEntityId,omitempty" validate:"omitempty,uuid"`
+}
+
+// GetEntityChildrenRequest represents a request to get children of an entity
+type GetEntityChildrenRequest struct {
+	Recursive    bool   `json:"recursive" form:"recursive" default:"false"`
+	Level        int    `json:"level" form:"level" default:"0"`
+	CategoryType string `json:"categoryType" form:"categoryType"`
+}
+
+// GetEntityHierarchyRequest represents a request to get an entity hierarchy
+type GetEntityHierarchyRequest struct {
+	MaxDepth int `json:"maxDepth" form:"maxDepth" default:"10"`
+}
