@@ -13,17 +13,17 @@ import (
 	"n1h41/zolaris-backend-app/internal/utils"
 )
 
-// CreateRootEntityHandler handles requests to create a root entity
-type CreateRootEntityHandler struct {
+// EntityHandler handles all entity-related HTTP requests
+type EntityHandler struct {
 	entityService *services.EntityService
 }
 
-// NewCreateRootEntityHandler creates a new CreateRootEntityHandler
-func NewCreateRootEntityHandler(entityService *services.EntityService) *CreateRootEntityHandler {
-	return &CreateRootEntityHandler{entityService: entityService}
+// NewEntityHandler creates a new EntityHandler
+func NewEntityHandler(entityService *services.EntityService) *EntityHandler {
+	return &EntityHandler{entityService: entityService}
 }
 
-// HandleGin handles requests using Gin framework
+// HandleCreateRootEntity handles requests to create a root entity
 // @Summary Create a root entity
 // @Description Create a new top-level entity with optional user association
 // @Tags Entity Management
@@ -37,7 +37,7 @@ func NewCreateRootEntityHandler(entityService *services.EntityService) *CreateRo
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security ApiKeyAuth
 // @Router /entity/root [post]
-func (h *CreateRootEntityHandler) HandleGin(c *gin.Context) {
+func (h *EntityHandler) HandleCreateRootEntity(c *gin.Context) {
 	// Parse request body
 	var request dto.CreateRootEntityRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -78,17 +78,7 @@ func (h *CreateRootEntityHandler) HandleGin(c *gin.Context) {
 	response.Created(c, map[string]string{"entityId": entityID}, "Root entity created successfully")
 }
 
-// CreateSubEntityHandler handles requests to create a sub-entity
-type CreateSubEntityHandler struct {
-	entityService *services.EntityService
-}
-
-// NewCreateSubEntityHandler creates a new CreateSubEntityHandler
-func NewCreateSubEntityHandler(entityService *services.EntityService) *CreateSubEntityHandler {
-	return &CreateSubEntityHandler{entityService: entityService}
-}
-
-// HandleGin handles requests using Gin framework
+// HandleCreateSubEntity handles requests to create a sub-entity
 // @Summary Create a sub-entity
 // @Description Create a new entity as a child of an existing entity
 // @Tags Entity Management
@@ -103,7 +93,7 @@ func NewCreateSubEntityHandler(entityService *services.EntityService) *CreateSub
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security ApiKeyAuth
 // @Router /entity/sub [post]
-func (h *CreateSubEntityHandler) HandleGin(c *gin.Context) {
+func (h *EntityHandler) HandleCreateSubEntity(c *gin.Context) {
 	// Parse request body
 	var request dto.CreateSubEntityRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -149,17 +139,7 @@ func (h *CreateSubEntityHandler) HandleGin(c *gin.Context) {
 	response.Created(c, map[string]string{"entityId": entityID}, "Sub-entity created successfully")
 }
 
-// GetEntityChildrenHandler handles requests to get children of an entity
-type GetEntityChildrenHandler struct {
-	entityService *services.EntityService
-}
-
-// NewGetEntityChildrenHandler creates a new GetEntityChildrenHandler
-func NewGetEntityChildrenHandler(entityService *services.EntityService) *GetEntityChildrenHandler {
-	return &GetEntityChildrenHandler{entityService: entityService}
-}
-
-// HandleGin handles requests using Gin framework
+// HandleGetEntityChildren handles requests to get children of an entity
 // @Summary Get entity children
 // @Description Get all children of a specific entity, with optional recursion and filtering
 // @Tags Entity Management
@@ -174,7 +154,7 @@ func NewGetEntityChildrenHandler(entityService *services.EntityService) *GetEnti
 // @Failure 404 {object} dto.ErrorResponse "Entity not found"
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Router /entity/{entity_id}/children [get]
-func (h *GetEntityChildrenHandler) HandleGin(c *gin.Context) {
+func (h *EntityHandler) HandleGetEntityChildren(c *gin.Context) {
 	// Get entity ID from URL path
 	entityID := c.Param("entity_id")
 	if entityID == "" {
@@ -229,17 +209,7 @@ func (h *GetEntityChildrenHandler) HandleGin(c *gin.Context) {
 	response.OK(c, result, "Entity children retrieved successfully")
 }
 
-// GetEntityHierarchyHandler handles requests to get an entity hierarchy
-type GetEntityHierarchyHandler struct {
-	entityService *services.EntityService
-}
-
-// NewGetEntityHierarchyHandler creates a new GetEntityHierarchyHandler
-func NewGetEntityHierarchyHandler(entityService *services.EntityService) *GetEntityHierarchyHandler {
-	return &GetEntityHierarchyHandler{entityService: entityService}
-}
-
-// HandleGin handles requests using Gin framework
+// HandleGetEntityHierarchy handles requests to get an entity hierarchy
 // @Summary Get entity hierarchy
 // @Description Get an entity and all its descendants as a hierarchical structure
 // @Tags Entity Management
@@ -252,7 +222,7 @@ func NewGetEntityHierarchyHandler(entityService *services.EntityService) *GetEnt
 // @Failure 404 {object} dto.ErrorResponse "Entity not found"
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Router /entity/{entity_id}/hierarchy [get]
-func (h *GetEntityHierarchyHandler) HandleGin(c *gin.Context) {
+func (h *EntityHandler) HandleGetEntityHierarchy(c *gin.Context) {
 	// Get entity ID from URL path
 	entityID := c.Param("entity_id")
 	if entityID == "" {
@@ -285,17 +255,7 @@ func (h *GetEntityHierarchyHandler) HandleGin(c *gin.Context) {
 	response.OK(c, hierarchyResponse, "Entity hierarchy retrieved successfully")
 }
 
-// CheckEntityPresenceHandler handles requests to check if a user has any entities
-type CheckEntityPresenceHandler struct {
-	entityService *services.EntityService
-}
-
-// NewCheckEntityPresenceHandler creates a new CheckEntityPresenceHandler
-func NewCheckEntityPresenceHandler(entityService *services.EntityService) *CheckEntityPresenceHandler {
-	return &CheckEntityPresenceHandler{entityService: entityService}
-}
-
-// HandleGin handles requests using Gin framework
+// HandleCheckEntityPresence handles requests to check if a user has any entities
 // @Summary Check entity presence
 // @Description Check if the authenticated user has any entities
 // @Tags Entity Management
@@ -307,7 +267,7 @@ func NewCheckEntityPresenceHandler(entityService *services.EntityService) *Check
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security ApiKeyAuth
 // @Router /user/has-entity [get]
-func (h *CheckEntityPresenceHandler) HandleGin(c *gin.Context) {
+func (h *EntityHandler) HandleCheckEntityPresence(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserIDFromGin(c)
 	if userID == "" {

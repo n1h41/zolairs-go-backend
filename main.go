@@ -76,6 +76,7 @@ func main() {
 	entityService := services.NewEntityService(entityRepo)
 
 	// Initialize handlers
+	entityHandler := handlers.NewEntityHandler(entityService)
 	addDeviceHandler := handlers.NewAddDeviceHandler(deviceService)
 	attachIotPolicyHandler := handlers.NewAttachIotPolicyHandler(policyService)
 	getDeviceSensorDataHandler := handlers.NewGetDeviceSensorDataHandler(deviceService)
@@ -86,13 +87,6 @@ func main() {
 	checkParentIDHandler := handlers.NewCheckHasParentIDHandler(userService)
 	updateUserDetailsHandler := handlers.NewUpdateUserDetailsHandler(userService)
 	getUserDetailsHandler := handlers.NewGetUserDetailsHandler(userService)
-
-	// Initialize entity handlers
-	createRootEntityHandler := handlers.NewCreateRootEntityHandler(entityService)
-	createSubEntityHandler := handlers.NewCreateSubEntityHandler(entityService)
-	getEntityChildrenHandler := handlers.NewGetEntityChildrenHandler(entityService)
-	getEntityHierarchyHandler := handlers.NewGetEntityHierarchyHandler(entityService)
-	checkEntityPresenceHandler := handlers.NewCheckEntityPresenceHandler(entityService)
 
 	// Create router with global middleware
 	r := gin.New()
@@ -158,11 +152,11 @@ func main() {
 		private.GET("/user/check-parent-id", checkParentIDHandler.HandleGin)
 		private.POST("/user/details", updateUserDetailsHandler.HandleGin)
 		private.GET("/user/details", getUserDetailsHandler.HandleGin)
-		private.GET("/user/has-entity", checkEntityPresenceHandler.HandleGin)
+		private.GET("/user/has-entity", entityHandler.HandleCheckEntityPresence)
 
 		// Entity endpoints (authenticated)
-		private.POST("/entity/root", createRootEntityHandler.HandleGin)
-		private.POST("/entity/sub", createSubEntityHandler.HandleGin)
+		private.POST("/entity/root", entityHandler.HandleCreateRootEntity)
+		private.POST("/entity/sub", entityHandler.HandleCreateSubEntity)
 	}
 
 	// Public routes (no authentication required)
@@ -173,8 +167,8 @@ func main() {
 	r.GET("/category/all", listAllCategoriesHandler.HandleGin)
 
 	// Entity endpoints (public)
-	r.GET("/entity/:entity_id/children", getEntityChildrenHandler.HandleGin)
-	r.GET("/entity/:entity_id/hierarchy", getEntityHierarchyHandler.HandleGin)
+	r.GET("/entity/:entity_id/children", entityHandler.HandleGetEntityChildren)
+	r.GET("/entity/:entity_id/hierarchy", entityHandler.HandleGetEntityHierarchy)
 
 	// Create server
 	port := cfg.Server.Port
