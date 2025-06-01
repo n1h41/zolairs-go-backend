@@ -77,6 +77,7 @@ func main() {
 
 	// Initialize handlers
 	entityHandler := handlers.NewEntityHandler(entityService)
+	userHandler := handlers.NewUserHandler(userService)
 	addDeviceHandler := handlers.NewAddDeviceHandler(deviceService)
 	attachIotPolicyHandler := handlers.NewAttachIotPolicyHandler(policyService)
 	getDeviceSensorDataHandler := handlers.NewGetDeviceSensorDataHandler(deviceService)
@@ -84,9 +85,6 @@ func main() {
 	addCategoryHandler := handlers.NewAddCategoryHandler(categoryService)
 	getCategoriesByTypeHandler := handlers.NewGetCategoriesByTypeHandler(categoryService)
 	listAllCategoriesHandler := handlers.NewListAllCategoriesHandler(categoryService)
-	checkParentIDHandler := handlers.NewCheckHasParentIDHandler(userService)
-	updateUserDetailsHandler := handlers.NewUpdateUserDetailsHandler(userService)
-	getUserDetailsHandler := handlers.NewGetUserDetailsHandler(userService)
 
 	// Create router with global middleware
 	r := gin.New()
@@ -149,9 +147,9 @@ func main() {
 		private.GET("/user/devices", listUserDevicesHandler.HandleGin)
 
 		// User endpoints
-		private.GET("/user/check-parent-id", checkParentIDHandler.HandleGin)
-		private.POST("/user/details", updateUserDetailsHandler.HandleGin)
-		private.GET("/user/details", getUserDetailsHandler.HandleGin)
+		private.GET("/user/check-parent-id", userHandler.HandleCheckHasParentID)
+		private.POST("/user/details", userHandler.HandleUpdateUserDetails)
+		private.GET("/user/details", userHandler.HandleGetUserDetails)
 		private.GET("/user/has-entity", entityHandler.HandleCheckEntityPresence)
 
 		// Entity endpoints (authenticated)

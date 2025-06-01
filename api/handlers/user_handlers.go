@@ -13,14 +13,12 @@ import (
 	"n1h41/zolaris-backend-app/internal/utils"
 )
 
-// GetUserDetailsHandler handles requests to get user details
-type GetUserDetailsHandler struct {
+type UserHandler struct {
 	userService *services.UserService
 }
 
-// NewGetUserDetailsHandler creates a new GetUserDetailsHandler
-func NewGetUserDetailsHandler(userService *services.UserService) *GetUserDetailsHandler {
-	return &GetUserDetailsHandler{userService: userService}
+func NewUserHandler(userService *services.UserService) *UserHandler {
+	return &UserHandler{userService: userService}
 }
 
 // HandleGin handles GET /user/details requests
@@ -36,7 +34,7 @@ func NewGetUserDetailsHandler(userService *services.UserService) *GetUserDetails
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security ApiKeyAuth
 // @Router /user/details [get]
-func (h *GetUserDetailsHandler) HandleGin(c *gin.Context) {
+func (h *UserHandler) HandleGetUserDetails(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserIDFromGin(c)
 	if userID == "" {
@@ -62,16 +60,6 @@ func (h *GetUserDetailsHandler) HandleGin(c *gin.Context) {
 	response.OK(c, userResponse, "User details retrieved successfully")
 }
 
-// UpdateUserDetailsHandler handles requests to update user details
-type UpdateUserDetailsHandler struct {
-	userService *services.UserService
-}
-
-// NewUpdateUserDetailsHandler creates a new UpdateUserDetailsHandler
-func NewUpdateUserDetailsHandler(userService *services.UserService) *UpdateUserDetailsHandler {
-	return &UpdateUserDetailsHandler{userService: userService}
-}
-
 // HandleGin handles POST /user/details requests
 // @Summary Update user details
 // @Description Update the authenticated user's profile information
@@ -86,7 +74,7 @@ func NewUpdateUserDetailsHandler(userService *services.UserService) *UpdateUserD
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security ApiKeyAuth
 // @Router /user/details [post]
-func (h *UpdateUserDetailsHandler) HandleGin(c *gin.Context) {
+func (h *UserHandler) HandleUpdateUserDetails(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserIDFromGin(c)
 	if userID == "" {
@@ -133,16 +121,6 @@ func (h *UpdateUserDetailsHandler) HandleGin(c *gin.Context) {
 	response.OK(c, userResponse, "User details updated successfully")
 }
 
-// CheckHasParentIDHandler handles requests to check if a user has a parent ID
-type CheckHasParentIDHandler struct {
-	UserService *services.UserService
-}
-
-// NewCheckHasParentIDHandler creates a new CheckHasParentIDHandler
-func NewCheckHasParentIDHandler(userService *services.UserService) *CheckHasParentIDHandler {
-	return &CheckHasParentIDHandler{UserService: userService}
-}
-
 // HandleGin handles GET /user/check-parent-id requests
 // @Summary Check if user has parent ID
 // @Description Checks if the authenticated user has a parent ID set in their profile
@@ -153,7 +131,7 @@ func NewCheckHasParentIDHandler(userService *services.UserService) *CheckHasPare
 // @Failure 400 {object} map[string]string "Error when user ID is not found in context"
 // @Failure 500 {object} map[string]string "Error when checking parent ID fails"
 // @Router /user/check-parent-id [get]
-func (h *CheckHasParentIDHandler) HandleGin(c *gin.Context) {
+func (h *UserHandler) HandleCheckHasParentID(c *gin.Context) {
 	// Extract user ID from the request context
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -162,7 +140,7 @@ func (h *CheckHasParentIDHandler) HandleGin(c *gin.Context) {
 	}
 
 	// Check if the user has a parent ID
-	hasParentID, err := h.UserService.CheckHasParentID(c.Request.Context(), userID.(string))
+	hasParentID, err := h.userService.CheckHasParentID(c.Request.Context(), userID.(string))
 	if err != nil {
 		log.Printf("Error checking parent ID: %v", err)
 		response.InternalError(c, "Failed to check parent ID")
