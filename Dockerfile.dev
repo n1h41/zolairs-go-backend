@@ -1,8 +1,10 @@
 FROM golang:1.24-alpine
 
-WORKDIR /app
+WORKDIR /home/n1h41/dev/go/works/zolaris-backend
 
+RUN apk add build-base gcc-go musl-dev
 RUN go install github.com/air-verse/air@latest
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 #Install build essentials
 # RUN apk add --no-cache gcc musl-dev

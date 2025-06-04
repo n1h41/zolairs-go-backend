@@ -13,14 +13,12 @@ import (
 	"n1h41/zolaris-backend-app/internal/utils"
 )
 
-// GetUserDetailsHandler handles requests to get user details
-type GetUserDetailsHandler struct {
+type UserHandler struct {
 	userService *services.UserService
 }
 
-// NewGetUserDetailsHandler creates a new GetUserDetailsHandler
-func NewGetUserDetailsHandler(userService *services.UserService) *GetUserDetailsHandler {
-	return &GetUserDetailsHandler{userService: userService}
+func NewUserHandler(userService *services.UserService) *UserHandler {
+	return &UserHandler{userService: userService}
 }
 
 // HandleGin handles GET /user/details requests
@@ -29,14 +27,14 @@ func NewGetUserDetailsHandler(userService *services.UserService) *GetUserDetails
 // @Tags User Management
 // @Accept json
 // @Produce json
-// @Param X-User-ID header string true "User ID"
+// @Param X-Cognito-ID header string true "Cognito ID"
 // @Success 200 {object} dto.Response{data=dto.UserResponse} "User details retrieved successfully"
 // @Failure 401 {object} dto.ErrorResponse "User not authenticated"
 // @Failure 404 {object} dto.ErrorResponse "User not found"
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security ApiKeyAuth
 // @Router /user/details [get]
-func (h *GetUserDetailsHandler) HandleGin(c *gin.Context) {
+func (h *UserHandler) HandleGetUserDetails(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserIDFromGin(c)
 	if userID == "" {
@@ -62,16 +60,6 @@ func (h *GetUserDetailsHandler) HandleGin(c *gin.Context) {
 	response.OK(c, userResponse, "User details retrieved successfully")
 }
 
-// UpdateUserDetailsHandler handles requests to update user details
-type UpdateUserDetailsHandler struct {
-	userService *services.UserService
-}
-
-// NewUpdateUserDetailsHandler creates a new UpdateUserDetailsHandler
-func NewUpdateUserDetailsHandler(userService *services.UserService) *UpdateUserDetailsHandler {
-	return &UpdateUserDetailsHandler{userService: userService}
-}
-
 // HandleGin handles POST /user/details requests
 // @Summary Update user details
 // @Description Update the authenticated user's profile information
@@ -86,7 +74,7 @@ func NewUpdateUserDetailsHandler(userService *services.UserService) *UpdateUserD
 // @Failure 500 {object} dto.ErrorResponse "Internal server error"
 // @Security ApiKeyAuth
 // @Router /user/details [post]
-func (h *UpdateUserDetailsHandler) HandleGin(c *gin.Context) {
+func (h *UserHandler) HandleUpdateUserDetails(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
 	userID := middleware.GetUserIDFromGin(c)
 	if userID == "" {
@@ -133,16 +121,6 @@ func (h *UpdateUserDetailsHandler) HandleGin(c *gin.Context) {
 	response.OK(c, userResponse, "User details updated successfully")
 }
 
-// CheckHasParentIDHandler handles requests to check if a user has a parent ID
-type CheckHasParentIDHandler struct {
-	UserService *services.UserService
-}
-
-// NewCheckHasParentIDHandler creates a new CheckHasParentIDHandler
-func NewCheckHasParentIDHandler(userService *services.UserService) *CheckHasParentIDHandler {
-	return &CheckHasParentIDHandler{UserService: userService}
-}
-
 // HandleGin handles GET /user/check-parent-id requests
 // @Summary Check if user has parent ID
 // @Description Checks if the authenticated user has a parent ID set in their profile
@@ -153,16 +131,16 @@ func NewCheckHasParentIDHandler(userService *services.UserService) *CheckHasPare
 // @Failure 400 {object} map[string]string "Error when user ID is not found in context"
 // @Failure 500 {object} map[string]string "Error when checking parent ID fails"
 // @Router /user/check-parent-id [get]
-func (h *CheckHasParentIDHandler) HandleGin(c *gin.Context) {
+func (h *UserHandler) HandleCheckHasParentID(c *gin.Context) {
 	// Extract user ID from the request context
 	userID, exists := c.Get("userID")
 	if !exists {
-		c.JSON(400, gin.H{"error": "User ID not found in context"})
+		response.BadRequest(c, "User ID not found in context")
 		return
 	}
 
 	// Check if the user has a parent ID
-	hasParentID, err := h.UserService.CheckHasParentID(c.Request.Context(), userID.(string))
+	hasParentID, err := h.userService.CheckHasParentID(c.Request.Context(), userID.(string))
 	if err != nil {
 		log.Printf("Error checking parent ID: %v", err)
 		response.InternalError(c, "Failed to check parent ID")
@@ -170,4 +148,32 @@ func (h *CheckHasParentIDHandler) HandleGin(c *gin.Context) {
 	}
 
 	response.OK(c, gin.H{"has_parent_id": hasParentID}, "Success")
+}
+
+// HandleListReferredUsers handles GET /user/referred-users requests
+// @Summary List referred users
+// @Description Retrieve a list of users referred by the authenticated user
+// @Tags User Management
+// @Produce json
+// @Param X-User-ID header string true "User ID"
+// @Success 200 {object} dto.Response{data=[]dto.UserResponse} "Referred users retrieved successfully"
+// @Failure 400 {object} dto.ErrorResponse "User ID not found in context"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Security ApiKeyAuth
+// @Router /user/referred-users [get]
+func (h *UserHandler) HandleListReferredUsers(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		response.BadRequest(c, "User ID not found in context")
+		return
+	}
+
+	referredUsers, err := h.userService.ListReferredUsers(c.Request.Context(), userID.(string))
+	if err != nil {
+		log.Printf("Error listing referred users: %v", err)
+		response.InternalError(c, "Failed to list referred users")
+		return
+	}
+
+	response.OK(c, mappers.UsersToResponses(referredUsers), "Referred users retrieved successfully")
 }

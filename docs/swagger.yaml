@@ -37,6 +37,38 @@ definitions:
       type:
         type: string
     type: object
+  dto.CreateRootEntityRequest:
+    properties:
+      categoryId:
+        type: string
+      details:
+        additionalProperties: {}
+        type: object
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - categoryId
+    - name
+    type: object
+  dto.CreateSubEntityRequest:
+    properties:
+      categoryId:
+        type: string
+      details:
+        additionalProperties: {}
+        type: object
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      parentEntityId:
+        type: string
+    required:
+    - categoryId
+    - name
+    type: object
   dto.DeviceRequest:
     properties:
       category:
@@ -66,6 +98,73 @@ definitions:
       deviceId:
         type: string
       deviceName:
+        type: string
+    type: object
+  dto.EntityChildrenResponse:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/dto.EntityResponse'
+        type: array
+      count:
+        type: integer
+      parentId:
+        type: string
+    type: object
+  dto.EntityHierarchyResponse:
+    properties:
+      categoryId:
+        type: string
+      categoryName:
+        type: string
+      categoryType:
+        type: string
+      children:
+        items:
+          $ref: '#/definitions/dto.EntityHierarchyResponse'
+        type: array
+      createdAt:
+        type: string
+      depth:
+        type: integer
+      details:
+        additionalProperties: {}
+        type: object
+      id:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  dto.EntityResponse:
+    properties:
+      categoryId:
+        type: string
+      categoryName:
+        type: string
+      categoryType:
+        type: string
+      createdAt:
+        type: string
+      depth:
+        type: integer
+      details:
+        additionalProperties: {}
+        type: object
+      id:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: string
+      updatedAt:
+        type: string
+      userId:
         type: string
     type: object
   dto.ErrorResponse:
@@ -139,6 +238,8 @@ definitions:
       parentId:
         type: string
       phone:
+        type: string
+      referralMail:
         type: string
       region:
         type: string
@@ -267,9 +368,9 @@ paths:
       - application/json
       description: Register a new IoT device for the authenticated user
       parameters:
-      - description: User ID
+      - description: Cognito ID
         in: header
-        name: X-User-ID
+        name: X-Cognito-ID
         required: true
         type: string
       - description: Device information
@@ -369,6 +470,186 @@ paths:
       summary: Get device sensor data
       tags:
       - Device Data
+  /entity/{entity_id}/children:
+    get:
+      consumes:
+      - application/json
+      description: Get all children of a specific entity, with optional recursion
+        and filtering
+      parameters:
+      - description: Entity ID
+        in: path
+        name: entity_id
+        required: true
+        type: string
+      - description: Whether to include all descendants
+        in: query
+        name: recursive
+        type: boolean
+      - description: Maximum depth level for descendants (0 for direct children only,
+          -1 for all)
+        in: query
+        name: level
+        type: integer
+      - description: Filter by category type
+        in: query
+        name: category_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Entity children retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.EntityChildrenResponse'
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Entity not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get entity children
+      tags:
+      - Entity Management
+  /entity/{entity_id}/hierarchy:
+    get:
+      consumes:
+      - application/json
+      description: Get an entity and all its descendants as a hierarchical structure
+      parameters:
+      - description: Entity ID
+        in: path
+        name: entity_id
+        required: true
+        type: string
+      - description: 'Maximum depth to include (default: 10)'
+        in: query
+        name: max_depth
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Entity hierarchy retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.EntityHierarchyResponse'
+              type: object
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Entity not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get entity hierarchy
+      tags:
+      - Entity Management
+  /entity/root:
+    post:
+      consumes:
+      - application/json
+      description: Create a new top-level entity with optional user association
+      parameters:
+      - description: Cognito ID
+        in: header
+        name: X-Cognito-ID
+        required: true
+        type: string
+      - description: Entity information
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateRootEntityRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Entity created successfully
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a root entity
+      tags:
+      - Entity Management
+  /entity/sub:
+    post:
+      consumes:
+      - application/json
+      description: Create a new entity as a child of an existing entity
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      - description: Entity information
+        in: body
+        name: entity
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateSubEntityRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Sub-entity created successfully
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Parent entity not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a sub-entity
+      tags:
+      - Entity Management
   /user/check-parent-id:
     get:
       description: Checks if the authenticated user has a parent ID set in their profile
@@ -408,9 +689,9 @@ paths:
       - application/json
       description: Retrieve authenticated user's profile information
       parameters:
-      - description: User ID
+      - description: Cognito ID
         in: header
-        name: X-User-ID
+        name: X-Cognito-ID
         required: true
         type: string
       produces:
@@ -520,4 +801,78 @@ paths:
       summary: List user devices
       tags:
       - Device Management
+  /user/has-entity:
+    get:
+      consumes:
+      - application/json
+      description: Check if the authenticated user has any entities
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Entity presence check successful
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: boolean
+                  type: object
+              type: object
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Check entity presence
+      tags:
+      - Entity Management
+  /user/referred-users:
+    get:
+      description: Retrieve a list of users referred by the authenticated user
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Referred users retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.UserResponse'
+                  type: array
+              type: object
+        "400":
+          description: User ID not found in context
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List referred users
+      tags:
+      - User Management
 swagger: "2.0"

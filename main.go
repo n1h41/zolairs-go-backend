@@ -64,6 +64,7 @@ func main() {
 	policyRepo := repositories.NewPolicyRepository(awsClients.GetIoTClient())
 	categoryRepo := repositories.NewCategoryRepository(database.GetPostgresPool())
 	userRepo := repositories.NewUserRepository(database.GetPostgresPool())
+	entityRepo := repositories.NewEntityRepository(database.GetPostgresPool())
 
 	deviceRepo.WithMachineTable(database.GetMachineDataTableName())
 
@@ -72,8 +73,11 @@ func main() {
 	policyService := services.NewPolicyService(policyRepo, cfg.AWS.IoTPolicy)
 	categoryService := services.NewCategoryService(categoryRepo)
 	userService := services.NewUserService(userRepo)
+	entityService := services.NewEntityService(entityRepo)
 
 	// Initialize handlers
+	entityHandler := handlers.NewEntityHandler(entityService)
+	userHandler := handlers.NewUserHandler(userService)
 	addDeviceHandler := handlers.NewAddDeviceHandler(deviceService)
 	attachIotPolicyHandler := handlers.NewAttachIotPolicyHandler(policyService)
 	getDeviceSensorDataHandler := handlers.NewGetDeviceSensorDataHandler(deviceService)
@@ -81,9 +85,6 @@ func main() {
 	addCategoryHandler := handlers.NewAddCategoryHandler(categoryService)
 	getCategoriesByTypeHandler := handlers.NewGetCategoriesByTypeHandler(categoryService)
 	listAllCategoriesHandler := handlers.NewListAllCategoriesHandler(categoryService)
-	checkParentIDHandler := handlers.NewCheckHasParentIDHandler(userService)
-	updateUserDetailsHandler := handlers.NewUpdateUserDetailsHandler(userService)
-	getUserDetailsHandler := handlers.NewGetUserDetailsHandler(userService)
 
 	// Create router with global middleware
 	r := gin.New()
@@ -141,13 +142,20 @@ func main() {
 	private := r.Group("/")
 	private.Use(middleware.GinAuthMiddleware(userService))
 	{
+		// Device endpoints
 		private.POST("/device/add", addDeviceHandler.HandleGin)
 		private.GET("/user/devices", listUserDevicesHandler.HandleGin)
-		private.GET("/user/check-parent-id", checkParentIDHandler.HandleGin)
 
-		// User details endpoints
-		private.POST("/user/details", updateUserDetailsHandler.HandleGin)
-		private.GET("/user/details", getUserDetailsHandler.HandleGin)
+		// User endpoints
+		private.GET("/user/check-parent-id", userHandler.HandleCheckHasParentID)
+		private.POST("/user/details", userHandler.HandleUpdateUserDetails)
+		private.GET("/user/details", userHandler.HandleGetUserDetails)
+		private.GET("/user/has-entity", entityHandler.HandleCheckEntityPresence)
+		private.GET("/users/referrals", userHandler.HandleListReferredUsers)
+
+		// Entity endpoints (authenticated)
+		private.POST("/entity/root", entityHandler.HandleCreateRootEntity)
+		private.POST("/entity/sub", entityHandler.HandleCreateSubEntity)
 	}
 
 	// Public routes (no authentication required)
@@ -156,6 +164,10 @@ func main() {
 	r.POST("/category/add", addCategoryHandler.HandleGin)
 	r.GET("/category/type/:type", getCategoriesByTypeHandler.HandleGin)
 	r.GET("/category/all", listAllCategoriesHandler.HandleGin)
+
+	// Entity endpoints (public)
+	r.GET("/entity/:entity_id/children", entityHandler.HandleGetEntityChildren)
+	r.GET("/entity/:entity_id/hierarchy", entityHandler.HandleGetEntityHierarchy)
 
 	// Create server
 	port := cfg.Server.Port

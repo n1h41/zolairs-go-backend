@@ -4,17 +4,18 @@ import "time"
 
 // UserDetailsRequest represents a request to create or update user details
 type UserDetailsRequest struct {
-	Email     string `json:"email" validate:"required,email"`
-	FirstName string `json:"firstName" validate:"required"`
-	LastName  string `json:"lastName" validate:"required"`
-	Phone     string `json:"phone" validate:"required"`
-	Street1   string `json:"street1" validate:"required"`
-	Street2   string `json:"street2"`
-	City      string `json:"city" validate:"required"`
-	Region    string `json:"region" validate:"required"`
-	Country   string `json:"country" validate:"required"`
-	Zip       string `json:"zip" validate:"required"`
-	ParentID  string `json:"parentId,omitempty"`
+	Email        string `json:"email" validate:"required,email"`
+	FirstName    string `json:"firstName" validate:"required"`
+	LastName     string `json:"lastName" validate:"required"`
+	Phone        string `json:"phone" validate:"required"`
+	Street1      string `json:"street1" validate:"required"`
+	Street2      string `json:"street2"`
+	City         string `json:"city" validate:"required"`
+	Region       string `json:"region" validate:"required"`
+	Country      string `json:"country" validate:"required"`
+	Zip          string `json:"zip" validate:"required"`
+	ParentID     string `json:"parentId,omitempty"`
+	ReferralMail string `json:"referralMail,omitempty"`
 }
 
 // DeviceRequest represents a request to add a new device
@@ -53,4 +54,31 @@ type TimeRange struct {
 type PaginationParams struct {
 	Page     int `json:"page" form:"page" default:"0"`
 	PageSize int `json:"pageSize" form:"pageSize" default:"20"`
+}
+
+// CreateRootEntityRequest represents a request to create a root entity
+type CreateRootEntityRequest struct {
+	CategoryID string         `json:"categoryId" validate:"required,uuid"`
+	Name       string         `json:"name" validate:"required,min=2,max=100"`
+	Details    map[string]any `json:"details,omitempty"`
+}
+
+// CreateSubEntityRequest represents a request to create a child entity
+type CreateSubEntityRequest struct {
+	CategoryID     string         `json:"categoryId" validate:"required,uuid"`
+	Name           string         `json:"name" validate:"required,min=2,max=100"`
+	Details        map[string]any `json:"details,omitempty"`
+	ParentEntityID string         `json:"parentEntityId,omitempty" validate:"omitempty,uuid"`
+}
+
+// GetEntityChildrenRequest represents a request to get children of an entity
+type GetEntityChildrenRequest struct {
+	Recursive    bool   `json:"recursive" form:"recursive" default:"false"`
+	Level        int    `json:"level" form:"level" default:"0"`
+	CategoryType string `json:"categoryType" form:"categoryType"`
+}
+
+// GetEntityHierarchyRequest represents a request to get an entity hierarchy
+type GetEntityHierarchyRequest struct {
+	MaxDepth int `json:"maxDepth" form:"maxDepth" default:"10"`
 }

@@ -28,7 +28,7 @@ func NewAddDeviceHandler(deviceService *services.DeviceService) *AddDeviceHandle
 // @Tags Device Management
 // @Accept json
 // @Produce json
-// @Param X-User-ID header string true "User ID"
+// @Param X-Cognito-ID header string true "Cognito ID"
 // @Param device body dto.DeviceRequest true "Device information"
 // @Success 201 {object} dto.Response "Device added successfully"
 // @Failure 400 {object} dto.ErrorResponse "Validation error"

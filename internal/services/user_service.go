@@ -74,3 +74,8 @@ func (s *UserService) UpdateUserDetails(ctx context.Context, userID string, req 
 func (s *UserService) CheckHasParentID(ctx context.Context, userID string) (bool, error) {
 	return s.userRepo.CheckHasParentID(ctx, userID)
 }
+
+func (s *UserService) ListReferredUsers(ctx context.Context, userID string) ([]*domain.User, error) {
+	log.Printf("Listing referred users for user %s", userID)
+	return s.userRepo.ListReferredUsers(ctx, userID)
+}

@@ -13,7 +13,7 @@ import (
 // This is a simplified version - in a real app, use JWT or OAuth2
 func GinAuthMiddleware(userService *services.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cogntioId := c.GetHeader("X-User-ID")
+		cogntioId := c.GetHeader("X-Cognito-ID")
 
 		userID, err := userService.GetUserIdByCognitoId(c.Request.Context(), cogntioId)
 		if err != nil {
@@ -25,7 +25,7 @@ func GinAuthMiddleware(userService *services.UserService) gin.HandlerFunc {
 
 		// For demo purposes only - in production, never use a default user
 		if userID == "" {
-			c.JSON(401, gin.H{"status": false, "message": "Unauthorized: Missing user ID"})
+			c.JSON(401, gin.H{"status": false, "message": "Unauthorized: Invalid user ID. Could not retrieve user by Cognito ID."})
 			c.Abort()
 			return
 		}

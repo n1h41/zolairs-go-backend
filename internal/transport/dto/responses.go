@@ -27,14 +27,14 @@ type ValidationError struct {
 
 // UserResponse represents user data in API responses
 type UserResponse struct {
-	ID        string        `json:"id"`
-	Email     string        `json:"email"`
-	FirstName *string       `json:"firstName"`
-	LastName  *string       `json:"lastName"`
-	Phone     *string       `json:"phone"`
-	Address   AddressOutput `json:"address"`
-	ParentID  string        `json:"parentId,omitempty"`
-	CreatedAt time.Time     `json:"createdAt"`
+	ID        string         `json:"id"`
+	Email     string         `json:"email"`
+	FirstName *string        `json:"firstName"`
+	LastName  *string        `json:"lastName"`
+	Phone     *string        `json:"phone"`
+	Address   *AddressOutput `json:"address"`
+	ParentID  string         `json:"parentId,omitempty"`
+	CreatedAt time.Time      `json:"createdAt"`
 }
 
 // AddressOutput represents address data in responses
@@ -78,4 +78,32 @@ type PaginatedResponse struct {
 	Page       int   `json:"page"`
 	PageSize   int   `json:"pageSize"`
 	TotalPages int   `json:"totalPages"`
+}
+
+// EntityResponse represents an entity in API responses
+type EntityResponse struct {
+	ID           string         `json:"id"`
+	Name         string         `json:"name"`
+	UserID       string         `json:"userId,omitempty"`
+	CategoryID   string         `json:"categoryId"`
+	CategoryName string         `json:"categoryName,omitempty"`
+	CategoryType string         `json:"categoryType,omitempty"`
+	ParentID     string         `json:"parentId,omitempty"`
+	Details      map[string]any `json:"details,omitempty"`
+	Depth        int            `json:"depth"`
+	CreatedAt    time.Time      `json:"createdAt"`
+	UpdatedAt    time.Time      `json:"updatedAt"`
+}
+
+// EntityHierarchyResponse represents an entity with its children in API responses
+type EntityHierarchyResponse struct {
+	EntityResponse
+	Children []EntityHierarchyResponse `json:"children,omitempty"`
+}
+
+// EntityChildrenResponse represents a list of entity children
+type EntityChildrenResponse struct {
+	ParentID string            `json:"parentId"`
+	Children []*EntityResponse `json:"children"`
+	Count    int               `json:"count"`
 }

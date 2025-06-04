@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ type User struct {
 	FirstName *string   `json:"firstName" db:"first_name"`
 	LastName  *string   `json:"lastName" db:"last_name"`
 	Phone     *string   `json:"phone" db:"phone"`
-	Address   Address   `json:"address"`
+	Address   *Address  `json:"address"`
 	ParentID  *string   `json:"parentId,omitempty" db:"parent_id"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
@@ -82,6 +83,20 @@ func NewDevice(macAddress, userID, name string) *Device {
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
+}
+
+// Entity represents a hierarchical entity in the system
+type Entity struct {
+	ID         string          `json:"id" db:"entity_id"`
+	UserID     *string         `json:"userId,omitempty" db:"user_id"`
+	Name       string          `json:"name" db:"name"`
+	Details    json.RawMessage `json:"details" db:"details"`
+	CategoryID string          `json:"categoryId" db:"category_id"`
+	ParentID   *string         `json:"parentId,omitempty" db:"parent_id"`
+	Path       string          `json:"path,omitempty" db:"path"`
+	Depth      int             `json:"depth" db:"depth"`
+	CreatedAt  time.Time       `json:"createdAt" db:"created_at"`
+	UpdatedAt  time.Time       `json:"updatedAt" db:"updated_at"`
 }
 
 // NewCategory creates a new Category with default values
