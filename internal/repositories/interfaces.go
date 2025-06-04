@@ -15,6 +15,7 @@ type UserRepositoryInterface interface {
 	CheckHasParentID(ctx context.Context, userID string) (bool, error)
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
 	GetChildUsers(ctx context.Context, parentID string) ([]*domain.User, error)
+	ListReferredUsers(ctx context.Context, userID string) ([]*domain.User, error)
 }
 
 // DeviceRepositoryInterface defines the operations for device data

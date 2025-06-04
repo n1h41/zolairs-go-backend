@@ -151,6 +151,7 @@ func main() {
 		private.POST("/user/details", userHandler.HandleUpdateUserDetails)
 		private.GET("/user/details", userHandler.HandleGetUserDetails)
 		private.GET("/user/has-entity", entityHandler.HandleCheckEntityPresence)
+		private.GET("/users/referrals", userHandler.HandleListReferredUsers)
 
 		// Entity endpoints (authenticated)
 		private.POST("/entity/root", entityHandler.HandleCreateRootEntity)

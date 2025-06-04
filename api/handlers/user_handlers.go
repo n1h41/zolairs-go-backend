@@ -135,7 +135,7 @@ func (h *UserHandler) HandleCheckHasParentID(c *gin.Context) {
 	// Extract user ID from the request context
 	userID, exists := c.Get("userID")
 	if !exists {
-		c.JSON(400, gin.H{"error": "User ID not found in context"})
+		response.BadRequest(c, "User ID not found in context")
 		return
 	}
 
@@ -148,4 +148,32 @@ func (h *UserHandler) HandleCheckHasParentID(c *gin.Context) {
 	}
 
 	response.OK(c, gin.H{"has_parent_id": hasParentID}, "Success")
+}
+
+// HandleListReferredUsers handles GET /users/referrals requests
+// @Summary List referred users
+// @Description Get a list of users referred by the authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} response.Response{data=[]response.UserResponse} "Referred users retrieved successfully"
+// @Failure 400 {object} response.Response "User ID not found in context"
+// @Failure 500 {object} response.Response "Failed to list referred users"
+// @Router /users/referrals [get]
+func (h *UserHandler) HandleListReferredUsers(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		response.BadRequest(c, "User ID not found in context")
+		return
+	}
+
+	referredUsers, err := h.userService.ListReferredUsers(c.Request.Context(), userID.(string))
+	if err != nil {
+		log.Printf("Error listing referred users: %v", err)
+		response.InternalError(c, "Failed to list referred users")
+		return
+	}
+
+	response.OK(c, mappers.UsersToResponses(referredUsers), "Referred users retrieved successfully")
 }

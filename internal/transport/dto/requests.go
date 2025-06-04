@@ -4,17 +4,18 @@ import "time"
 
 // UserDetailsRequest represents a request to create or update user details
 type UserDetailsRequest struct {
-	Email     string `json:"email" validate:"required,email"`
-	FirstName string `json:"firstName" validate:"required"`
-	LastName  string `json:"lastName" validate:"required"`
-	Phone     string `json:"phone" validate:"required"`
-	Street1   string `json:"street1" validate:"required"`
-	Street2   string `json:"street2"`
-	City      string `json:"city" validate:"required"`
-	Region    string `json:"region" validate:"required"`
-	Country   string `json:"country" validate:"required"`
-	Zip       string `json:"zip" validate:"required"`
-	ParentID  string `json:"parentId,omitempty"`
+	Email        string `json:"email" validate:"required,email"`
+	FirstName    string `json:"firstName" validate:"required"`
+	LastName     string `json:"lastName" validate:"required"`
+	Phone        string `json:"phone" validate:"required"`
+	Street1      string `json:"street1" validate:"required"`
+	Street2      string `json:"street2"`
+	City         string `json:"city" validate:"required"`
+	Region       string `json:"region" validate:"required"`
+	Country      string `json:"country" validate:"required"`
+	Zip          string `json:"zip" validate:"required"`
+	ParentID     string `json:"parentId,omitempty"`
+	ReferralMail string `json:"referralMail,omitempty"`
 }
 
 // DeviceRequest represents a request to add a new device

@@ -27,14 +27,14 @@ type ValidationError struct {
 
 // UserResponse represents user data in API responses
 type UserResponse struct {
-	ID        string        `json:"id"`
-	Email     string        `json:"email"`
-	FirstName *string       `json:"firstName"`
-	LastName  *string       `json:"lastName"`
-	Phone     *string       `json:"phone"`
-	Address   AddressOutput `json:"address"`
-	ParentID  string        `json:"parentId,omitempty"`
-	CreatedAt time.Time     `json:"createdAt"`
+	ID        string         `json:"id"`
+	Email     string         `json:"email"`
+	FirstName *string        `json:"firstName"`
+	LastName  *string        `json:"lastName"`
+	Phone     *string        `json:"phone"`
+	Address   *AddressOutput `json:"address"`
+	ParentID  string         `json:"parentId,omitempty"`
+	CreatedAt time.Time      `json:"createdAt"`
 }
 
 // AddressOutput represents address data in responses

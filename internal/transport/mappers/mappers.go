@@ -14,13 +14,26 @@ func UserToResponse(user *domain.User) *dto.UserResponse {
 		return nil
 	}
 
-	response := &dto.UserResponse{
+	var response *dto.UserResponse
+
+	if user.Address == nil {
+		user.Address = &domain.Address{
+			Street1: "",
+			Street2: "",
+			City:    "",
+			Region:  "",
+			Country: "",
+			Zip:     "",
+		}
+	}
+
+	response = &dto.UserResponse{
 		ID:        user.ID,
 		Email:     user.Email,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Phone:     user.Phone,
-		Address: dto.AddressOutput{
+		Address: &dto.AddressOutput{
 			Street1: user.Address.Street1,
 			Street2: user.Address.Street2,
 			City:    user.Address.City,
@@ -53,7 +66,7 @@ func UserRequestToEntity(req *dto.UserDetailsRequest, existingUser *domain.User)
 	user.FirstName = &req.FirstName
 	user.LastName = &req.LastName
 	user.Phone = &req.Phone
-	user.Address = domain.Address{
+	user.Address = &domain.Address{
 		Street1: req.Street1,
 		Street2: req.Street2,
 		City:    req.City,

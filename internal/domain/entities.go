@@ -14,7 +14,7 @@ type User struct {
 	FirstName *string   `json:"firstName" db:"first_name"`
 	LastName  *string   `json:"lastName" db:"last_name"`
 	Phone     *string   `json:"phone" db:"phone"`
-	Address   Address   `json:"address"`
+	Address   *Address  `json:"address"`
 	ParentID  *string   `json:"parentId,omitempty" db:"parent_id"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
