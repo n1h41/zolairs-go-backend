@@ -280,3 +280,49 @@ func (r *UserRepository) GetChildUsers(ctx context.Context, parentID string) ([]
 
 	return users, nil
 }
+
+func (r *UserRepository) ListReferredUsers(ctx context.Context, userID string) ([]*domain.User, error) {
+	query := `
+		SELECT user_id, email, first_name, last_name, phone, 
+		       address, parent_id, created_at, updated_at
+		FROM z_users
+		WHERE referral_mail = (
+        SELECT
+            email
+        FROM
+            z_users
+        WHERE
+            user_id = $1
+		);
+	`
+
+	rows, _ := r.db.Query(ctx, query, userID)
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("database error: %w", rows.Err())
+	}
+
+	defer rows.Close()
+
+	var users []*domain.User
+	for rows.Next() {
+		user := &domain.User{}
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.FirstName,
+			&user.LastName,
+			&user.Phone,
+			&user.Address,
+			&user.ParentID,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning user row: %w", err)
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}

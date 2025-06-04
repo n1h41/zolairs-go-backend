@@ -15,6 +15,7 @@ type UserRepositoryInterface interface {
 	CheckHasParentID(ctx context.Context, userID string) (bool, error)
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
 	GetChildUsers(ctx context.Context, parentID string) ([]*domain.User, error)
+	ListReferredUsers(ctx context.Context, userID string) ([]*domain.User, error)
 }
 
 // DeviceRepositoryInterface defines the operations for device data
@@ -34,4 +35,13 @@ type CategoryRepositoryInterface interface {
 // PolicyRepositoryInterface defines the operations for policy data
 type PolicyRepositoryInterface interface {
 	AttachPolicy(ctx context.Context, identityId, policyName string) error
+}
+
+// EntityRepositoryInterface defines the operations for entity data
+type EntityRepositoryInterface interface {
+	CheckEntityPresence(ctx context.Context, userId string) (bool, error)
+	GetCategoryType(ctx context.Context, categoryId string) (CategoryType, error)
+	CreateRootEntity(ctx context.Context, categoryId string, entityName string, userId string, details map[string]any) (string, error)
+	CreateSubEntity(ctx context.Context, categoryId string, entityName string, parentEntityId string, userId string, details map[string]any) (string, error)
+	GetChildEntities(ctx context.Context, entityId string, recursive bool) ([]*domain.Entity, error)
 }
