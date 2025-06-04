@@ -16,7 +16,7 @@ END
 $$;
 
 CREATE TABLE IF NOT EXISTS z_users (
-    user_id uuid PRIMARY KEY NOT NULL DEFAULT GEN_RANDOM_UUID(),
+    user_id uuid PRIMARY KEY NOT NULL DEFAULT GEN_RANDOM_UUID (),
     email varchar(255) UNIQUE NOT NULL,
     first_name varchar(100),
     last_name varchar(100),
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS z_users (
     address jsonb,
     parent_id uuid,
     cognito_id varchar(255) NOT NULL UNIQUE,
-    role user_role NOT NULL DEFAULT 'user',
+    ROLE user_role NOT NULL DEFAULT 'user',
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (parent_id) REFERENCES z_users (user_id)
