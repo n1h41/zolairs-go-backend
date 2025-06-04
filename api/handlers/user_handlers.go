@@ -150,17 +150,17 @@ func (h *UserHandler) HandleCheckHasParentID(c *gin.Context) {
 	response.OK(c, gin.H{"has_parent_id": hasParentID}, "Success")
 }
 
-// HandleListReferredUsers handles GET /users/referrals requests
+// HandleListReferredUsers handles GET /user/referred-users requests
 // @Summary List referred users
-// @Description Get a list of users referred by the authenticated user
-// @Tags users
-// @Accept json
+// @Description Retrieve a list of users referred by the authenticated user
+// @Tags User Management
 // @Produce json
-// @Security BearerAuth
-// @Success 200 {object} response.Response{data=[]response.UserResponse} "Referred users retrieved successfully"
-// @Failure 400 {object} response.Response "User ID not found in context"
-// @Failure 500 {object} response.Response "Failed to list referred users"
-// @Router /users/referrals [get]
+// @Param X-User-ID header string true "User ID"
+// @Success 200 {object} dto.Response{data=[]dto.UserResponse} "Referred users retrieved successfully"
+// @Failure 400 {object} dto.ErrorResponse "User ID not found in context"
+// @Failure 500 {object} dto.ErrorResponse "Internal server error"
+// @Security ApiKeyAuth
+// @Router /user/referred-users [get]
 func (h *UserHandler) HandleListReferredUsers(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {

@@ -239,6 +239,8 @@ definitions:
         type: string
       phone:
         type: string
+      referralMail:
+        type: string
       region:
         type: string
       street1:
@@ -837,4 +839,40 @@ paths:
       summary: Check entity presence
       tags:
       - Entity Management
+  /user/referred-users:
+    get:
+      description: Retrieve a list of users referred by the authenticated user
+      parameters:
+      - description: User ID
+        in: header
+        name: X-User-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Referred users retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.UserResponse'
+                  type: array
+              type: object
+        "400":
+          description: User ID not found in context
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List referred users
+      tags:
+      - User Management
 swagger: "2.0"
