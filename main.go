@@ -116,7 +116,7 @@ func main() {
 			return false
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "X-User-ID"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "X-Cognito-ID"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           1 * time.Hour,
